@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "organization": "nnnnzs",
+  "date": "2026-04-20",
+  "abstract": "OpenAPI/Swagger 文档解析工具，支持按模块、路径、schema 分块读取，避免大文档导致上下文溢出。提供精准的接口信息提取，适用于生成 API 调用代码、查询接口定义、获取数据结构等场景。",
+  "references": [
+    "https://spec.openapis.org/oas/v3.0.0",
+    "https://swagger.io/specification/",
+    "https://stedolan.github.io/jq/"
+  ]
+}
