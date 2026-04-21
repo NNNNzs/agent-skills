@@ -18,52 +18,44 @@ RUOYI_TOKEN=your_bearer_token_here
 
 获取 Token：登录若依系统 → 浏览器开发者工具 → Network → 请求头中的 `Authorization` 字段（复制 `Bearer ` 后面的值）
 
-## 使用方法
+## API 文档
 
-调用 `scripts/client.py` 中的 API 方法：
+详细接口文档按模块分类，按需查阅：
+
+- **用户管理** - 见 [references/user.md](references/user.md)
+- **角色管理** - 见 [references/role.md](references/role.md)
+- **菜单管理** - 见 [references/menu.md](references/menu.md)
+- **部门管理** - 见 [references/dept.md](references/dept.md)
+
+## 快速开始
 
 ```python
 from scripts.client import create_client
 
 api = create_client()
 
-# 用户管理
-api.list_users(params)
-api.create_user({'userName': 'test', 'nickName': '测试', 'password': '123456', 'deptId': 100})
-api.update_user({'userId': 1, 'nickName': '新昵称'})
-api.delete_user('1,2')
-api.reset_password(1, 'newpass')
+# 查询用户
+api.list_users({'pageNum': 1, 'pageSize': 10})
 
-# 角色管理
-api.list_roles(params)
-api.create_role({'roleName': '测试角色', 'roleKey': 'test', 'roleSort': 10})
-api.update_role(data)
-api.delete_role('1')
-api.change_role_status(1, '0')
+# 创建用户
+api.create_user({
+    'userName': 'test',
+    'nickName': '测试',
+    'password': '123456',
+    'deptId': 100
+})
 
-# 菜单管理
-api.list_menus(params)
-api.create_menu({'menuName': '系统监控', 'parentId': 0, 'orderNum': 10, 'path': '/monitor', 'menuType': 'C'})
-api.update_menu(data)
-api.delete_menu(1)
-
-# 部门管理
-api.list_depts(params)
-api.create_dept({'parentId': 100, 'deptName': '测试部', 'orderNum': 10})
-api.update_dept(data)
-api.delete_dept(103)
+# 创建角色
+api.create_role({
+    'roleName': '测试角色',
+    'roleKey': 'test',
+    'roleSort': 10
+})
 ```
 
 ## 命令行使用
 
 ```bash
 python3 scripts/client.py list-users
-python3 scripts/client.py create-user --data '{"userName":"test","password":"123456"}'
-python3 scripts/client.py delete-user --id 1
+python3 scripts/client.py create-user --data '{"userName":"test","password":"123456","deptId":100}'
 ```
-
-## 参数说明
-
-**创建用户**：userName, nickName, password, deptId (必填)
-**创建角色**：roleName, roleKey, roleSort (必填)
-**创建菜单**：menuName, parentId, orderNum, path, menuType (必填)
