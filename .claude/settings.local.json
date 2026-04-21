@@ -5,7 +5,12 @@
       "mcp__zread__read_file",
       "Bash(chmod +x *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -s http://localhost:3700/v3/api-docs/system -o /tmp/ruoyi-system-api.json)",
+      "Read(//tmp/**)",
+      "Bash(python3 -c \"import json, sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d.get\\('paths', {}\\).keys\\(\\)\\)[:20], indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(npx skills *)",
+      "Bash(python3 *)"
     ]
   }
 }

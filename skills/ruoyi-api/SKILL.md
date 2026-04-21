@@ -1,91 +1,71 @@
+---
+name: ruoyi-api
+description: 直接调用若依系统 API 进行用户、角色、菜单、部门等管理操作。使用场景：(1) 创建/更新/删除用户 (2) 管理角色和权限 (3) 创建菜单和部门 (4) 批量操作系统数据。需要先配置 ~/.ruoyi-config.json 或项目根目录 .ruoyi-config.json 文件，包含 baseUrl 和 token。
+---
+
 # ruoyi-api
 
-若依系统 API 直接调用工具。
-
-## 描述
-
-直接调用若依系统的管理接口，包括用户管理、角色管理、部门管理、菜单管理等核心功能。无需手动创建，大模型可直接执行操作。
+直接调用若依系统管理接口的工具。
 
 ## 配置
 
-在使用前，需要配置若依系统的访问信息：
+创建配置文件 `~/.ruoyi-config.json` 或项目根目录 `.ruoyi-config.json`：
 
-```bash
-# 创建配置文件
-cat > ~/.ruoyi-config.json << EOF
+```json
 {
   "baseUrl": "http://localhost:3700",
   "token": "your_bearer_token_here"
 }
-EOF
 ```
 
-获取 Token 的方式：
-1. 登录若依系统后，从浏览器开发者工具中获取请求头中的 `Authorization` 值
-2. 或通过登录接口获取：`POST /auth/login`
+获取 Token：登录若依系统 → 浏览器开发者工具 → Network → 请求头中的 `Authorization` 字段
 
-## 使用场景
+## 使用方法
 
-当你需要：
-- 直接操作若依系统的用户、角色、菜单等数据
-- 快速创建测试数据
-- 批量管理系统配置
-- 自动化系统初始化
+调用 `scripts/client.py` 中的 API 方法：
 
-## 可用操作
+```python
+from scripts.client import create_client
 
-### 用户管理
-- 创建用户
-- 更新用户信息
-- 删除用户
-- 重置用户密码
-- 启用/禁用用户
-- 查询用户列表
+api = create_client()
 
-### 角色管理
-- 创建角色
-- 更新角色权限
-- 删除角色
-- 分配数据权限
-- 查询角色列表
+# 用户管理
+api.list_users(params)
+api.create_user({'userName': 'test', 'nickName': '测试', 'password': '123456', 'deptId': 100})
+api.update_user({'userId': 1, 'nickName': '新昵称'})
+api.delete_user('1,2')
+api.reset_password(1, 'newpass')
 
-### 菜单管理
-- 创建菜单
-- 更新菜单信息
-- 删除菜单
-- 调整菜单排序
-- 查询菜单树
+# 角色管理
+api.list_roles(params)
+api.create_role({'roleName': '测试角色', 'roleKey': 'test', 'roleSort': 10})
+api.update_role(data)
+api.delete_role('1')
+api.change_role_status(1, '0')
 
-### 部门管理
-- 创建部门
-- 更新部门信息
-- 删除部门
-- 查询部门树
+# 菜单管理
+api.list_menus(params)
+api.create_menu({'menuName': '系统监控', 'parentId': 0, 'orderNum': 10, 'path': '/monitor', 'menuType': 'C'})
+api.update_menu(data)
+api.delete_menu(1)
 
-### 其他模块
-- 岗位管理、字典管理、通知公告、参数配置
-
-## 使用示例
-
-```
-请使用 ruoyi-api 创建一个测试用户，用户名为 testuser，昵称测试用户
+# 部门管理
+api.list_depts(params)
+api.create_dept({'parentId': 100, 'deptName': '测试部', 'orderNum': 10})
+api.update_dept(data)
+api.delete_dept(103)
 ```
 
-```
-使用 ruoyi-api 查询所有角色列表
+## 命令行使用
+
+```bash
+python3 scripts/client.py list-users
+python3 scripts/client.py create-user --data '{"userName":"test","password":"123456"}'
+python3 scripts/client.py delete-user --id 1
 ```
 
-```
-请用 ruoyi-api 为用户 testuser 分配管理员角色
-```
+## 参数说明
 
-```
-使用 ruoyi-api 创建一个新的菜单项：系统监控，路径为 /monitor
-```
-
-## 注意事项
-
-1. 确保 Token 有效且具有相应权限
-2. 删除操作不可恢复，请谨慎使用
-3. 批量操作前建议先查询确认
-4. 敏感操作需要管理员权限
+**创建用户**：userName, nickName, password, deptId (必填)
+**创建角色**：roleName, roleKey, roleSort (必填)
+**创建菜单**：menuName, parentId, orderNum, path, menuType (必填)
