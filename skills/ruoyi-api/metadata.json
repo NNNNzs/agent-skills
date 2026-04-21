@@ -1,0 +1,32 @@
+{
+  "name": "ruoyi-api",
+  "version": "1.0.0",
+  "description": "若依系统 API 接口生成工具",
+  "author": "NNNNzs",
+  "tags": ["ruoyi", "api", "openapi", "typescript", "code-generation"],
+  "category": "backend",
+  "license": "MIT",
+  "homepage": "https://github.com/NNNNzs/agent-skills#ruoyi-api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NNNNzs/agent-skills"
+  },
+  "capabilities": {
+    "code_generation": true,
+    "type_definition": true,
+    "api_parsing": true
+  },
+  "supported_modules": [
+    "user",
+    "role",
+    "dept",
+    "menu",
+    "post",
+    "dict",
+    "notice",
+    "config"
+  ],
+  "supported_formats": [
+    "typescript"
+  ]
+}
