@@ -11,16 +11,13 @@ https://github.com/NNNNzs/agent-skills
 ```
 agent-skills/
 ├── README.md              # 项目说明
-├── AGENTS.md             # AI 代理工作指南
 ├── CLAUDE.md             # 项目索引和简要说明
+├── .env.example          # 环境变量配置示例
 ├── skills/               # 技能集合
 │   └── {skill-name}/     # 单个技能目录
 │       ├── SKILL.md      # 技能定义（必需）
-│       ├── metadata.json # 元数据
-│       ├── README.md     # 技能说明
-│       ├── AGENTS.md     # 代理指令
-│       ├── rules/        # 规则文件
-│       └── resources/    # 资源文件
+│       ├── scripts/      # 可执行脚本
+│       └── references/   # 参考文档（渐进式披露）
 └── packages/             # 可选的构建包
 ```
 
@@ -65,13 +62,13 @@ npx skills add NNNNzs/agent-skills --skill ruoyi-api
 ```
 
 **配置**：
-创建 `~/.ruoyi-config.json` 或项目根目录 `.ruoyi-config.json`：
-```json
-{
-  "baseUrl": "http://localhost:3700",
-  "token": "your_bearer_token_here"
-}
+在项目根目录创建 `.env` 文件：
+```bash
+RUOYI_BASE_URL=http://localhost:3700
+RUOYI_TOKEN=your_bearer_token_here
 ```
+
+获取 Token：登录若依系统 → 浏览器开发者工具 → Network → 请求头中的 `Authorization` 字段
 
 **使用示例**：
 ```markdown

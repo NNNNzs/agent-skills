@@ -14,15 +14,14 @@
 skills/
   {skill-name}/           # kebab-case 目录名
     SKILL.md              # 必需：技能定义
-    metadata.json         # 必需：元数据
-    README.md             # 推荐：技能说明
-    AGENTS.md             # 推荐：代理指令
+    scripts/              # 可选：可执行脚本
+      {script-name}.py
+    references/           # 推荐：参考文档（渐进式披露）
+      {module-name}.md
     rules/                # 可选：规则文件
       {rule-name}.md
-    resources/            # 可选：资源文件
+    assets/               # 可选：资源文件
       {file-name}
-    scripts/              # 可选：可执行脚本
-      {script-name}.sh
 ```
 
 ### 命名规范
@@ -81,19 +80,20 @@ rules/{prefix}-{rule-name}.md
 - 额外的上下文和参考
 ```
 
-### metadata.json 格式
+### 配置文件
 
-```json
-{
-  "version": "1.0.0",
-  "organization": "{组织名称}",
-  "date": "{发布日期}",
-  "abstract": "{技能摘要，描述目的和范围}",
-  "references": [
-    "https://example.com/reference1",
-    "https://example.com/reference2"
-  ]
-}
+**环境变量配置**（推荐）：
+```bash
+# 在项目根目录创建 .env 文件
+ENV_VAR_NAME=value
+ANOTHER_VAR=value
+```
+
+**配置示例文件**：
+```bash
+# 创建 .env.example 作为配置模板
+cp .env.example .env
+# 然后编辑 .env 填入实际值
 ```
 
 ### 上下文效率最佳实践
@@ -105,37 +105,50 @@ rules/{prefix}-{rule-name}.md
 - **使用渐进式披露** —— 引用支持文件，只在需要时读取
 - **优先使用脚本而非内联代码** —— 脚本执行不消耗上下文（只有输出会）
 - **文件引用只工作一级** —— 从 SKILL.md 直接链接到支持文件
+- **避免创建不必要的文件** —— 只保留 SKILL.md 和必需的资源文件
 
-### README.md 格式
+**推荐结构**：
+- `SKILL.md` - 核心配置和使用说明（< 500 行）
+- `scripts/` - 可执行脚本（不加载到上下文）
+- `references/` - 模块化参考文档（按需加载）
+- 删除不需要的 README.md、metadata.json、AGENTS.md 等冗余文件
 
-每个技能应该有自己的 README.md，用于人类阅读：
+### 参考文档格式
+
+渐进式披露的参考文档应该包含：
 
 ```markdown
-# {技能名称}
+# {模块名称} API/文档
 
-{人类可读的技能描述}
+## 接口名称
 
-## 何时使用
+**接口**：`{METHOD} {path}`
 
-- {使用场景 1}
-- {使用场景 2}
-
-## 包含的规则
-
-- {规则 1}
-- {规则 2}
-
-## 安装
-
-```bash
-cp -r skills/{skill-name} ~/.claude/skills/
+**请求参数**：
+```json
+{
+  "param1": "值1",
+  "param2": "值2"
+}
 ```
 
-## 参考资料
+**字段说明**：
+- `param1`: 参数说明，从 [相关接口](other.md#接口名称) 获取
+- `param2`: 参数说明
 
-- [参考 1](url)
-- [参考 2](url)
+**返回结果**：
+```json
+{
+  "code": 200,
+  "data": {}
+}
 ```
+```
+
+**关键要点**：
+- 清晰标注每个字段的来源
+- 使用交叉引用链接到相关接口
+- 提供完整的请求/响应示例
 
 ### 创建规则文件
 
