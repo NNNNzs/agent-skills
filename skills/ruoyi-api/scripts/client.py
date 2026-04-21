@@ -17,7 +17,7 @@ import urllib.parse
 class RuoyiClient:
     """若依系统 API 客户端"""
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, skip_validation: bool = False):
         self.config = self._load_config(config_path)
         self.base_url = self.config.get('baseUrl', 'http://localhost:3700')
         self.token = self.config.get('token', '')
@@ -25,6 +25,53 @@ class RuoyiClient:
             'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json'
         }
+
+        # 自动检测并提示 base_url 配置
+        if not skip_validation:
+            self._validate_base_url()
+
+    def _validate_base_url(self):
+        """验证 base_url 配置是否正确"""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(self.base_url)
+        path = parsed.path.rstrip('/')
+
+        # 检查是否包含常见的二级目录
+        has_subpath = any(path.endswith(suffix) for suffix in ['/dev-api', '/api', '/prod-api'])
+
+        if has_subpath:
+            print(f"✓ 检测到 base_url 包含二级路径: {path}")
+            print(f"   这是前端代理地址格式")
+        else:
+            print(f"ℹ️  base_url 未包含二级路径: {self.base_url}")
+            print(f"   这通常是后端接口地址格式")
+            print(f"   如果连接失败，请确认是否需要添加 /dev-api 等路径\n")
+
+        # 测试连通性
+        try:
+            test_url = f"{self.base_url}/getInfo"
+            req = urllib.request.Request(
+                test_url,
+                headers=self.headers,
+                method='GET'
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    print(f"✓ 连接成功: {self.base_url}")
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                print(f"✓ 连接成功，Token 验证通过")
+            elif e.code == 404:
+                print(f"⚠️  接口返回 404，可能原因：")
+                print(f"   1. base_url 需要包含二级路径（如 /dev-api）")
+                print(f"   2. 后端接口路径不正确")
+                print(f"   请检查浏览器 Network 面板的实际请求地址")
+            else:
+                print(f"⚠️  HTTP 错误: {e.code}")
+        except Exception as e:
+            print(f"✗ 连接失败: {e}")
+            print(f"   请检查 base_url 和网络连接")
 
     def _load_config(self, config_path: str = None) -> Dict:
         """加载配置文件"""
@@ -463,9 +510,14 @@ class RuoyiAPI:
         return self.client.delete('/system/config/refreshCache')
 
 
-def create_client(config_path: str = None) -> RuoyiAPI:
-    """创建 API 客户端"""
-    client = RuoyiClient(config_path)
+def create_client(config_path: str = None, skip_validation: bool = False) -> RuoyiAPI:
+    """创建 API 客户端
+
+    Args:
+        config_path: 配置文件路径（可选）
+        skip_validation: 是否跳过连通性验证（默认 False）
+    """
+    client = RuoyiClient(config_path, skip_validation)
     return RuoyiAPI(client)
 
 
@@ -487,11 +539,12 @@ def main():
     parser.add_argument('--id', type=int, help='ID')
     parser.add_argument('--data', '-d', help='JSON 数据')
     parser.add_argument('--params', '-p', help='查询参数')
+    parser.add_argument('--skip-validation', action='store_true', help='跳过连通性验证')
 
     args = parser.parse_args()
 
     try:
-        api = create_client(args.config)
+        api = create_client(args.config, skip_validation=args.skip_validation)
         result = None
 
         # 解析 JSON 参数
