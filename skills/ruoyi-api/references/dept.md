@@ -26,7 +26,14 @@
       "phone": "13800138000",
       "email": "company@example.com",
       "status": "0",
-      "children": []
+      "children": [
+        {
+          "deptId": 101,
+          "parentId": 100,
+          "deptName": "技术部",
+          "orderNum": 1
+        }
+      ]
     }
   ]
 }
@@ -37,7 +44,7 @@
 **接口**：`GET /system/dept/{deptId}`
 
 **路径参数**：
-- `deptId`: 部门 ID
+- `deptId`: 部门 ID，从 [查询部门列表](#查询部门列表) 的返回结果中获取
 
 **返回结果**：
 ```json
@@ -75,7 +82,7 @@
 ```
 
 **必填字段**：
-- `parentId`: 父部门 ID（0 为根部门）
+- `parentId`: 父部门 ID（0 为根部门），从 [查询部门列表](#查询部门列表) 的返回结果中获取
 - `deptName`: 部门名称
 - `orderNum`: 显示顺序
 
@@ -105,6 +112,10 @@
 }
 ```
 
+**字段说明**：
+- `deptId`: 部门 ID，从 [查询部门列表](#查询部门列表) 的返回结果中获取
+- `parentId`: 父部门 ID，从 [查询部门列表](#查询部门列表) 的返回结果中获取
+
 **返回结果**：
 ```json
 {
@@ -118,7 +129,7 @@
 **接口**：`DELETE /system/dept/{deptId}`
 
 **路径参数**：
-- `deptId`: 部门 ID
+- `deptId`: 部门 ID，从 [查询部门列表](#查询部门列表) 的返回结果中获取
 
 **返回结果**：
 ```json
