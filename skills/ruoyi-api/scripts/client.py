@@ -28,26 +28,30 @@ class RuoyiClient:
 
     def _load_config(self, config_path: str = None) -> Dict:
         """加载配置文件"""
-        if config_path:
-            config_file = Path(config_path)
-        else:
-            # 按优先级查找配置文件
-            config_paths = [
-                Path.cwd() / '.ruoyi-config.json',
-                Path.home() / '.ruoyi-config.json',
-                Path(__file__).parent / 'config.json',
-            ]
-            config_file = None
-            for path in config_paths:
-                if path.exists():
-                    config_file = path
-                    break
+        # 优先从环境变量读取
+        base_url = os.getenv('RUOYI_BASE_URL')
+        token = os.getenv('RUOYI_TOKEN')
 
-        if config_file is None or not config_file.exists():
-            raise FileNotFoundError(
-                "找不到若依配置文件。请创建 ~/.ruoyi-config.json 或项目根目录 .ruoyi-config.json\n"
-                "配置格式：\n"
-                '{\n'
+        if base_url and token:
+            return {'baseUrl': base_url, 'token': token}
+
+        # 从 .env 文件读取
+        env_file = Path.cwd() / '.env'
+        if env_file.exists():
+            with open(env_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('RUOYI_BASE_URL='):
+                        base_url = line.split('=', 1)[1].strip()
+                    elif line.startswith('RUOYI_TOKEN='):
+                        token = line.split('=', 1)[1].strip()
+            if base_url and token:
+                return {'baseUrl': base_url, 'token': token}
+
+        raise FileNotFoundError(
+            "找不到若依配置。请在项目根目录创建 .env 文件：\n"
+            "RUOYI_BASE_URL=http://localhost:3700\n"
+            "RUOYI_TOKEN=your_bearer_token_here\n\n"
                 '  "baseUrl": "http://localhost:3700",\n'
                 '  "token": "your_bearer_token_here"\n'
                 '}'
