@@ -11,6 +11,14 @@ metadata:
 
 OpenAPI/Swagger 文档解析工具，专为 AI 代理设计，支持按需精准提取接口信息，避免上下文溢出。
 
+## 脚本路径
+
+所有脚本位于本技能目录下的 `scripts/` 子目录。代理应使用相对于 SKILL.md 所在目录的路径调用：
+```
+{SKILL_DIR}/scripts/{script-name}.py
+```
+其中 `{SKILL_DIR}` 为本文件所在目录的绝对路径。
+
 ## 何时激活此技能
 
 当用户提到以下内容时激活：
@@ -52,7 +60,7 @@ OpenAPI 文档通常很大（可能数 MB），直接读取会导致上下文溢
 
 **使用 Python 脚本**（无需安装依赖）：
 ```bash
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-tags.py {swagger-url}
+python3 scripts/fetch-tags.py {swagger-url}
 ```
 
 **预期输出**：
@@ -72,12 +80,12 @@ python3 /mnt/skills/user/openapi-explorer/scripts/fetch-tags.py {swagger-url}
 
 **按模块获取**：
 ```bash
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-by-tag.py {swagger-url} {tag-name}
+python3 scripts/fetch-by-tag.py {swagger-url} {tag-name}
 ```
 
 **按路径获取**：
 ```bash
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-endpoint.py {swagger-url} "{path}"
+python3 scripts/fetch-endpoint.py {swagger-url} "{path}"
 ```
 
 ### 第三步：获取接口详情
@@ -85,7 +93,7 @@ python3 /mnt/skills/user/openapi-explorer/scripts/fetch-endpoint.py {swagger-url
 获取具体接口的完整定义（parameters、requestBody、responses）：
 
 ```bash
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-endpoint.py {swagger-url} "{path}" {method}
+python3 scripts/fetch-endpoint.py {swagger-url} "{path}" {method}
 ```
 
 ### 第四步：解析引用
@@ -97,7 +105,7 @@ python3 /mnt/skills/user/openapi-explorer/scripts/fetch-endpoint.py {swagger-url
 echo '{...endpoint_json...}' > /tmp/endpoint.json
 
 # 解析所有 $ref
-cat /tmp/endpoint.json | python3 /mnt/skills/user/openapi-explorer/scripts/resolve-refs.py {swagger-url}
+cat /tmp/endpoint.json | python3 scripts/resolve-refs.py {swagger-url}
 ```
 
 ### 第五步：生成代码
@@ -139,7 +147,7 @@ cat /tmp/endpoint.json | python3 /mnt/skills/user/openapi-explorer/scripts/resol
 ## 重要注意事项
 
 1. **避免读取整个文档**：永远不要使用 `fetch(swaggerUrl).then(r => r.json())` 然后读取整个 doc
-2. **优先使用脚本**：使用提供的 Node.js 脚本，它们已经实现了分块读取
+2. **优先使用脚本**：使用提供的 Python 脚本，它们已经实现了分块读取
 3. **限制输出大小**：如果某个接口的返回值过大，询问用户需要哪些具体字段
 4. **缓存策略**：如果用户查询多个接口，可以缓存文档到 `/tmp/swagger-{timestamp}.json`
 5. **错误处理**：如果脚本执行失败，检查 URL 是否正确、是否有网络问题
@@ -148,83 +156,25 @@ cat /tmp/endpoint.json | python3 /mnt/skills/user/openapi-explorer/scripts/resol
 
 ```bash
 # 获取所有模块
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-tags.py {url}
+python3 scripts/fetch-tags.py {url}
 
 # 获取模块下的接口列表
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-by-tag.py {url} {tag}
+python3 scripts/fetch-by-tag.py {url} {tag}
 
 # 获取接口详情
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-endpoint.py {url} {path} {method}
+python3 scripts/fetch-endpoint.py {url} {path} {method}
 
 # 获取 schema 定义
-python3 /mnt/skills/user/openapi-explorer/scripts/fetch-schema.py {url} {SchemaName}
+python3 scripts/fetch-schema.py {url} {SchemaName}
 
 # 解析 $ref 引用
-echo '{...}' | python3 /mnt/skills/user/openapi-explorer/scripts/resolve-refs.py {url}
+echo '{...}' | python3 scripts/resolve-refs.py {url}
 ```
 
-## 故障排除
+## 参考文档
 
-### Python 未安装
+遇到问题或需要代码模板时，按需查阅：
 
-确保系统已安装 Python 3：
-```bash
-python3 --version  # 应该 >= 3.6
-```
-
-### 脚本无法执行
-
-确保脚本有执行权限：
-```bash
-chmod +x /mnt/skills/user/openapi-explorer/scripts/*.py
-```
-
-### URL 无法访问
-
-1. 检查 URL 是否正确
-2. 检查是否需要认证
-3. 尝试使用代理或下载到本地
-
-### 文档太大
-
-不要尝试读取整个文档，使用分块查询：
-- 先获取 tags
-- 再按 tag 获取接口列表
-- 最后获取具体接口详情
-
-## 代码生成示例
-
-### TypeScript (fetch)
-
-```typescript
-interface {SchemaName} {
-  // 根据 schema 生成接口定义
-}
-
-async function apiCall(params: {SchemaName}) {
-  const response = await fetch('{url}', {
-    method: '{method}',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
-  });
-  return response.json();
-}
-```
-
-### Python (requests)
-
-```python
-import requests
-from typing import Optional
-
-def api_call():
-    url = "{url}"
-    headers = {"Content-Type": "application/json"}
-    response = requests.{method.lower()}(url, json=params, headers=headers)
-    return response.json()
-```
-
-## 参考资料
-
+- **故障排除** - 见 [references/troubleshooting.md](references/troubleshooting.md)
+- **代码生成示例** - 见 [references/code-examples.md](references/code-examples.md)
 - [OpenAPI 3.0 规范](https://spec.openapis.org/oas/v3.0.0)
-- [node-fetch 文档](https://github.com/node-fetch/node-fetch)

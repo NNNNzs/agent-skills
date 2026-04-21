@@ -37,6 +37,9 @@ OpenAPI/Swagger 文档解析工具。支持按模块、路径精准提取接口�
 ```bash
 npx skills add NNNNzs/agent-skills --skill openapi-explorer
 ```
+```bash
+npx skills add NNNNzs/agent-skills --skill ruoyi-api
+```
 
 ### ruoyi-api
 

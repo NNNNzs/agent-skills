@@ -1,10 +1,10 @@
 # AGENTS.md
 
-本文件为 AI 编码代理（Claude Code、Cursor、Copilot 等）提供在此仓库中工作的指导，老板。
+本文件为 AI 编码代理（Claude Code、Cursor、Copilot 等）提供在此仓库中工作的指导。
 
 ## 仓库概述
 
-这是一个为 Claude.ai 和 Claude Code 设计的技能集合仓库，用于扩展 Claude 的能力。每个技能都是打包的指令和资源，可以根据任务需求自动激活，老板。
+这是一个为 Claude.ai 和 Claude Code 设计的技能集合仓库，用于扩展 Claude 的能力。每个技能都是打包的指令和资源，可以根据任务需求自动激活。
 
 ## 创建新技能
 

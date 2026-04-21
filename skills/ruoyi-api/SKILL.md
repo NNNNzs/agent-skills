@@ -1,6 +1,6 @@
 ---
 name: ruoyi-api
-description: 直接调用若依系统 API 进行用户、角色、菜单、部门等管理操作。使用场景：(1) 创建/更新/删除用户 (2) 管理角色和权限 (3) 创建菜单和部门 (4) 批量操作系统数据。需要先配置项目根目录 .env 文件，包含 RUOYI_BASE_URL 和 RUOYI_TOKEN。
+description: 若依(RuoYi)系统管理 API 调用工具。当用户需要操作若依系统的用户、角色、菜单、部门时激活。触发词："若依"、"ruoyi"、"创建用户"、"分配角色"、"创建菜单"。需要配置 .env 文件（RUOYI_BASE_URL、RUOYI_TOKEN）。
 ---
 
 # ruoyi-api
