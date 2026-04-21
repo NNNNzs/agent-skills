@@ -310,19 +310,157 @@ class RuoyiAPI:
         """删除岗位"""
         return self.client.delete(f'/system/post/{post_ids}')
 
-    # ==================== 字典管理 ====================
+    # ==================== 字典类型管理 ====================
 
     def list_dict_types(self, params: Dict = None) -> Dict:
-        """查询字典类型列表"""
+        """
+        查询字典类型列表
+
+        参数示例：
+        {
+            "pageNum": 1,
+            "pageSize": 10,
+            "dictName": "状态",  # 可选，字典名称
+            "dictType": "sys_status",  # 可选，字典类型
+            "status": "0"  # 可选，状态（0正常 1停用）
+        }
+        """
         return self.client.get('/system/dict/type/list', params)
 
+    def get_dict_type(self, dict_id: int) -> Dict:
+        """获取字典类型详情"""
+        return self.client.get(f'/system/dict/type/{dict_id}')
+
     def create_dict_type(self, dict_data: Dict) -> Dict:
-        """创建字典类型"""
+        """
+        创建字典类型
+
+        参数示例：
+        {
+            "dictName": "用户状态",
+            "dictType": "sys_user_status",
+            "status": "0",
+            "remark": "用户状态列表"
+        }
+
+        字典类型命名规范：以小写字母开头，只能包含小写字母、数字、下划线
+        """
         return self.client.post('/system/dict/type', dict_data)
 
-    def list_dict_data(self, dict_type: str) -> Dict:
-        """根据字典类型查询字典数据"""
-        return self.client.get('/system/dict/data/type', {'dictType': dict_type})
+    def update_dict_type(self, dict_data: Dict) -> Dict:
+        """更新字典类型"""
+        return self.client.put('/system/dict/type', dict_data)
+
+    def delete_dict_type(self, dict_ids: str) -> Dict:
+        """删除字典类型（多个ID用逗号分隔）"""
+        return self.client.delete(f'/system/dict/type/{dict_ids}')
+
+    def refresh_dict_cache(self) -> Dict:
+        """刷新字典缓存"""
+        return self.client.delete('/system/dict/type/refreshCache')
+
+    # ==================== 字典数据管理 ====================
+
+    def list_dict_data(self, params: Dict = None) -> Dict:
+        """
+        查询字典数据列表
+
+        参数示例：
+        {
+            "pageNum": 1,
+            "pageSize": 10,
+            "dictType": "sys_user_status",  # 字典类型
+            "dictLabel": "正常"  # 可选，字典标签
+        }
+        """
+        return self.client.get('/system/dict/data/list', params)
+
+    def get_dict_data_by_type(self, dict_type: str) -> Dict:
+        """根据字典类型查询字典数据（返回所有数据，不分页）"""
+        return self.client.get(f'/system/dict/data/type/{dict_type}')
+
+    def get_dict_data(self, dict_code: int) -> Dict:
+        """获取字典数据详情"""
+        return self.client.get(f'/system/dict/data/{dict_code}')
+
+    def create_dict_data(self, dict_data: Dict) -> Dict:
+        """
+        创建字典数据
+
+        参数示例：
+        {
+            "dictSort": 1,
+            "dictLabel": "正常",
+            "dictValue": "0",
+            "dictType": "sys_user_status",
+            "cssClass": "",
+            "listClass": "primary",
+            "isDefault": "Y",
+            "status": "0",
+            "remark": "正常状态"
+        }
+        """
+        return self.client.post('/system/dict/data', dict_data)
+
+    def update_dict_data(self, dict_data: Dict) -> Dict:
+        """更新字典数据"""
+        return self.client.put('/system/dict/data', dict_data)
+
+    def delete_dict_data(self, dict_codes: str) -> Dict:
+        """删除字典数据（多个ID用逗号分隔）"""
+        return self.client.delete(f'/system/dict/data/{dict_codes}')
+
+    # ==================== 参数配置管理 ====================
+
+    def list_configs(self, params: Dict = None) -> Dict:
+        """
+        查询参数配置列表
+
+        参数示例：
+        {
+            "pageNum": 1,
+            "pageSize": 10,
+            "configName": "主框架",  # 可选，参数名称
+            "configKey": "sys.index",  # 可选，参数键名
+            "configType": "Y"  # 可选，系统内置（Y是 N否）
+        }
+        """
+        return self.client.get('/system/config/list', params)
+
+    def get_config(self, config_id: int) -> Dict:
+        """获取参数配置详情"""
+        return self.client.get(f'/system/config/{config_id}')
+
+    def get_config_by_key(self, config_key: str) -> Dict:
+        """根据参数键名查询参数值"""
+        return self.client.get(f'/system/config/configKey/{config_key}')
+
+    def create_config(self, config_data: Dict) -> Dict:
+        """
+        创建参数配置
+
+        参数示例：
+        {
+            "configName": "主框架页-默认皮肤样式名称",
+            "configKey": "sys.index.skinName",
+            "configValue": "skin-blue",
+            "configType": "Y",
+            "remark": "若依系统默认皮肤"
+        }
+        """
+        return self.client.post('/system/config', config_data)
+
+    def update_config(self, config_data: Dict) -> Dict:
+        """更新参数配置"""
+        return self.client.put('/system/config', config_data)
+
+    def delete_config(self, config_ids: str) -> Dict:
+        """删除参数配置（多个ID用逗号分隔）"""
+        return self.client.delete(f'/system/config/{config_ids}')
+
+    def refresh_config_cache(self) -> Dict:
+        """刷新参数缓存"""
+        return self.client.delete('/system/config/refreshCache')
 
 
 def create_client(config_path: str = None) -> RuoyiAPI:
@@ -340,7 +478,10 @@ def main():
         'list-users', 'get-user', 'create-user', 'delete-user',
         'list-roles', 'get-role', 'create-role', 'delete-role',
         'list-menus', 'get-menu', 'create-menu', 'delete-menu',
-        'list-depts', 'get-dept', 'create-dept', 'delete-dept'
+        'list-depts', 'get-dept', 'create-dept', 'delete-dept',
+        'list-dict-types', 'get-dict-type', 'create-dict-type', 'update-dict-type', 'delete-dict-type',
+        'list-dict-data', 'get-dict-data', 'create-dict-data', 'update-dict-data', 'delete-dict-data',
+        'list-configs', 'get-config', 'get-config-by-key', 'create-config', 'update-config', 'delete-config'
     ])
     parser.add_argument('--config', '-c', help='配置文件路径')
     parser.add_argument('--id', type=int, help='ID')
@@ -390,6 +531,39 @@ def main():
             result = api.create_dept(data)
         elif args.action == 'delete-dept' and args.id:
             result = api.delete_dept(args.id)
+        # 字典类型管理
+        elif args.action == 'list-dict-types':
+            result = api.list_dict_types(params)
+        elif args.action == 'get-dict-type' and args.id:
+            result = api.get_dict_type(args.id)
+        elif args.action == 'create-dict-type' and data:
+            result = api.create_dict_type(data)
+        elif args.action == 'update-dict-type' and data:
+            result = api.update_dict_type(data)
+        elif args.action == 'delete-dict-type' and args.id:
+            result = api.delete_dict_type(str(args.id))
+        # 字典数据管理
+        elif args.action == 'list-dict-data':
+            result = api.list_dict_data(params)
+        elif args.action == 'get-dict-data' and args.id:
+            result = api.get_dict_data(args.id)
+        elif args.action == 'create-dict-data' and data:
+            result = api.create_dict_data(data)
+        elif args.action == 'update-dict-data' and data:
+            result = api.update_dict_data(data)
+        elif args.action == 'delete-dict-data' and args.id:
+            result = api.delete_dict_data(str(args.id))
+        # 参数配置管理
+        elif args.action == 'list-configs':
+            result = api.list_configs(params)
+        elif args.action == 'get-config' and args.id:
+            result = api.get_config(args.id)
+        elif args.action == 'create-config' and data:
+            result = api.create_config(data)
+        elif args.action == 'update-config' and data:
+            result = api.update_config(data)
+        elif args.action == 'delete-config' and args.id:
+            result = api.delete_config(str(args.id))
 
         if result:
             print(json.dumps(result, ensure_ascii=False, indent=2))
