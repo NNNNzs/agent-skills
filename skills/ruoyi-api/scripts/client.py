@@ -82,32 +82,63 @@ class RuoyiClient:
         if base_url and token:
             return {'baseUrl': base_url, 'token': token}
 
-        # 从 .env 文件读取
-        env_file = Path.cwd() / '.env'
-        if env_file.exists():
-            with open(env_file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('RUOYI_BASE_URL='):
-                        base_url = line.split('=', 1)[1].strip()
-                    elif line.startswith('RUOYI_TOKEN='):
-                        token = line.split('=', 1)[1].strip()
-            if base_url and token:
-                return {'baseUrl': base_url, 'token': token}
+        # 支持通过环境变量指定配置文件路径
+        config_env_path = os.getenv('RUOYI_CONFIG_PATH')
+        if config_env_path:
+            env_file = Path(config_env_path)
+            if env_file.exists():
+                base_url, token = self._parse_env_file(env_file)
+                if base_url and token:
+                    print(f"✓ 从 {env_file} 加载配置")
+                    return {'baseUrl': base_url, 'token': token}
+
+        # 支持通过参数指定配置文件路径
+        if config_path:
+            env_file = Path(config_path)
+            if env_file.exists():
+                base_url, token = self._parse_env_file(env_file)
+                if base_url and token:
+                    print(f"✓ 从 {env_file} 加载配置")
+                    return {'baseUrl': base_url, 'token': token}
+
+        # 按优先级查找 .env 文件
+        env_paths = [
+            Path.cwd() / '.env',  # 当前工作目录
+            Path.home() / '.env',  # 用户 HOME 目录
+        ]
+
+        for env_file in env_paths:
+            if env_file.exists():
+                base_url, token = self._parse_env_file(env_file)
+                if base_url and token:
+                    print(f"✓ 从 {env_file} 加载配置")
+                    return {'baseUrl': base_url, 'token': token}
 
         raise FileNotFoundError(
-            "找不到若依配置。请在项目根目录创建 .env 文件：\n"
-            "RUOYI_BASE_URL=http://localhost:3700\n"
-            "RUOYI_TOKEN=your_bearer_token_here\n\n"
-                '  "baseUrl": "http://localhost:3700",\n'
-                '  "token": "your_bearer_token_here"\n'
-                '}'
-            )
+            "找不到若依配置。请通过以下方式之一配置：\n\n"
+            "1. 设置环境变量：\n"
+            "   export RUOYI_BASE_URL=http://localhost:3700\n"
+            "   export RUOYI_TOKEN=your_bearer_token_here\n\n"
+            "2. 指定配置文件路径：\n"
+            "   export RUOYI_CONFIG_PATH=/path/to/.env\n\n"
+            "3. 在当前目录或 HOME 目录创建 .env 文件"
+        )
 
-        with open(config_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
+    def _parse_env_file(self, env_file: Path) -> tuple:
+        """解析 .env 文件"""
+        base_url = token = None
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('#') or not line:
+                    continue
+                if line.startswith('RUOYI_BASE_URL='):
+                    base_url = line.split('=', 1)[1].strip()
+                elif line.startswith('RUOYI_TOKEN='):
+                    token = line.split('=', 1)[1].strip()
+        return base_url, token
 
-    def _request(self, method: str, path: str, data: Any = None, params: Dict = None) -> Dict:
+    def _request(self, method: str, path: str, data: Any = None, params: Dict = None) -> Any:
         """发送 HTTP 请求"""
         url = f"{self.base_url}{path}"
 
@@ -131,7 +162,10 @@ class RuoyiClient:
         try:
             with urllib.request.urlopen(req) as response:
                 response_data = response.read().decode('utf-8')
-                return json.loads(response_data) if response_data else {}
+                if not response_data:
+                    return {}
+                result = json.loads(response_data)
+                return self._unwrap_response(result)
         except urllib.error.HTTPError as e:
             error_msg = e.read().decode('utf-8')
             return {
@@ -144,6 +178,51 @@ class RuoyiClient:
                 'error': True,
                 'message': str(e)
             }
+
+    def _unwrap_response(self, result: Dict) -> Any:
+        """解包若依统一响应格式
+
+        若依后端返回格式：
+        - 列表接口: {total, rows, code, msg}
+        - 详情接口: {msg, code, data}
+        - 操作接口: {msg, code}
+        """
+        # 检查是否是若依统一响应格式
+        if 'code' in result:
+            code = result.get('code')
+            if code != 200:
+                # 返回错误信息
+                return {
+                    'error': True,
+                    'code': code,
+                    'message': result.get('msg', '未知错误')
+                }
+
+            # 根据字段判断响应类型
+            if 'rows' in result:
+                # 列表接口：返回 rows 和 total
+                return {
+                    'data': result['rows'],
+                    'total': result.get('total', 0),
+                    'code': code,
+                    'msg': result.get('msg', '')
+                }
+            elif 'data' in result:
+                # 详情接口：返回 data
+                return {
+                    'data': result['data'],
+                    'code': code,
+                    'msg': result.get('msg', '')
+                }
+            else:
+                # 操作接口：只返回状态
+                return {
+                    'code': code,
+                    'msg': result.get('msg', '操作成功')
+                }
+
+        # 非若依格式，直接返回
+        return result
 
     def get(self, path: str, params: Dict = None) -> Dict:
         """GET 请求"""
