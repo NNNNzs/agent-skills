@@ -13,19 +13,7 @@ import json
 import sys
 from typing import List, Dict, Optional
 
-
-def read_flow(flow_path: str) -> List[Dict]:
-    """Read and parse a Node-RED flow file."""
-    try:
-        with open(flow_path, "r") as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"ERROR: Invalid JSON in {flow_path}")
-        print(f"  {e}")
-        sys.exit(1)
-    except FileNotFoundError:
-        print(f"ERROR: File not found: {flow_path}")
-        sys.exit(1)
+from common import read_flow
 
 
 def get_node_by_id(flow: List[Dict], node_id: str) -> Optional[Dict]:

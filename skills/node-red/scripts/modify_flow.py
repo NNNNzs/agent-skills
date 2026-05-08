@@ -15,26 +15,7 @@ import json
 import sys
 from typing import Dict, List, Optional
 
-
-def read_flow(flow_path: str) -> List[Dict]:
-    """Read and parse a Node-RED flow file."""
-    try:
-        with open(flow_path, "r") as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        print(f"ERROR: Invalid JSON in {flow_path}")
-        print(f"  {e}")
-        sys.exit(1)
-    except FileNotFoundError:
-        print(f"ERROR: File not found: {flow_path}")
-        sys.exit(1)
-
-
-def write_flow(flow: List[Dict], output_path: str):
-    """Write flow to file."""
-    with open(output_path, "w") as f:
-        json.dump(flow, f, indent=2)
-    print(f"✓ Flow saved to: {output_path}")
+from common import read_flow, write_flow
 
 
 def find_node(flow: List[Dict], node_id: str) -> Optional[Dict]:

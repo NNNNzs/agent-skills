@@ -1,0 +1,23 @@
+{
+  "skill_name": "node-red",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我有一个 flows.json，里面有十几个 debug 节点，我想把生产环境的流程里所有 debug 节点都禁用掉，应该怎么做？",
+      "expected_output": "Uses batch_nodes.py --disable --type debug to disable all debug nodes. Should first use read_flow.py --summary to inspect the flow, then batch_nodes.py to disable, then validate_flow.py to verify.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "帮我用 Node-RED 搭一个 MQTT 温度数据接收流程，订阅 sensor/+/temperature，温度超过 30 度就报警。把 function 节点的代码也写好。",
+      "expected_output": "Uses create_flow.py --template mqtt as starting point, then reads boilerplate/function_async.js or function_snippets.md for the threshold logic. Creates a complete flow with mqtt in -> function (threshold check) -> debug/alert output. Validates the flow.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我把 flows.json 里的一个 function 节点的代码改坏了，现在部署报错 invalid_flow，帮我检查一下哪里出了问题。",
+      "expected_output": "Uses validate_flow.py to check for structural issues (broken wires, missing IDs). If validation passes, reads the function node code to find JS syntax errors. Explains the error and uses modify_flow.py to fix if needed.",
+      "files": []
+    }
+  ]
+}
