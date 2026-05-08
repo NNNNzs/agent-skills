@@ -1,604 +1,170 @@
 # Node-RED Function Node Code Snippets
 
+完整模板见 `assets/boilerplate/function_async.js` 和 `function_context.js`，此处仅保留速查片段。
+
 ## Message Manipulation
 
-### Clone message for multiple outputs
+### 多输出
 ```javascript
-// Send different data to multiple outputs
 let msg1 = RED.util.cloneMessage(msg);
 let msg2 = RED.util.cloneMessage(msg);
-
 msg1.payload = "Output 1";
 msg2.payload = "Output 2";
-
 return [msg1, msg2];
 ```
 
-### Conditional routing
+### 条件路由
 ```javascript
-// Route to different outputs based on value
-if (msg.payload > 100) {
-    return [msg, null, null];  // Output 1
-} else if (msg.payload > 50) {
-    return [null, msg, null];  // Output 2
-} else {
-    return [null, null, msg];  // Output 3
-}
-```
-
-### Message aggregation
-```javascript
-// Collect multiple messages before processing
-let messages = context.get('messages') || [];
-messages.push(msg.payload);
-
-if (messages.length >= 5) {
-    msg.payload = messages;
-    context.set('messages', []);
-    return msg;
-} else {
-    context.set('messages', messages);
-    return null;  // Don't send anything yet
-}
+if (msg.payload > 100) return [msg, null, null];
+else if (msg.payload > 50) return [null, msg, null];
+else return [null, null, msg];
 ```
 
 ## Asynchronous Operations
 
-### Basic async with setTimeout
 ```javascript
-// Delay message by 1 second
-setTimeout(function() {
-    msg.payload = "Delayed response";
-    node.send(msg);
-    node.done();
-}, 1000);
-return null;  // Don't return anything immediately
-```
+// 简单延迟
+setTimeout(() => { node.send(msg); node.done(); }, 1000);
+return null;
 
-### HTTP request with async/await
-```javascript
-// Make async HTTP request
+// 异步 HTTP 请求
 const https = require('https');
-
-async function fetchData() {
-    try {
-        const response = await new Promise((resolve, reject) => {
-            https.get('https://api.example.com/data', (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => resolve(JSON.parse(data)));
-            }).on('error', reject);
-        });
-
-        msg.payload = response;
-        node.send(msg);
-    } catch (error) {
-        node.error("Failed to fetch data: " + error, msg);
-    }
-    node.done();
-}
-
-fetchData();
-return null;
-```
-
-### Multiple async operations
-```javascript
-// Process multiple async operations
-async function processMultiple() {
-    const promises = msg.payload.map(async (item) => {
-        // Simulate async operation
-        await new Promise(resolve => setTimeout(resolve, 100));
-        return item * 2;
-    });
-
-    try {
-        const results = await Promise.all(promises);
-        msg.payload = results;
-        node.send(msg);
-    } catch (error) {
-        node.error("Processing failed: " + error, msg);
-    }
-    node.done();
-}
-
-processMultiple();
-return null;
+const data = await new Promise((resolve, reject) => {
+    https.get('https://api.example.com/data', res => {
+        let d = ''; res.on('data', c => d += c);
+        res.on('end', () => resolve(JSON.parse(d)));
+    }).on('error', reject);
+});
+msg.payload = data;
 ```
 
 ## Context Storage
 
-### Counter with persistence
 ```javascript
-// Increment counter stored in context
+// node 级别
 let count = context.get('count') || 0;
-count++;
-context.set('count', count);
+context.set('count', ++count);
 
-msg.payload = {
-    count: count,
-    timestamp: new Date().toISOString()
-};
-return msg;
-```
+// flow 级别
+let shared = flow.get('sharedData') || {};
+shared[msg.topic] = msg.payload;
+flow.set('sharedData', shared);
 
-### Flow-wide shared data
-```javascript
-// Share data across nodes in the same flow
-let flowData = flow.get('sharedData') || {};
-flowData[msg.topic] = msg.payload;
-flow.set('sharedData', flowData);
+// global 级别
+const config = global.get('appConfig') || { apiUrl: 'https://api.example.com' };
 
-// Get all collected data
-msg.payload = flow.get('sharedData');
-return msg;
-```
-
-### Global configuration
-```javascript
-// Access global configuration
-const config = global.get('appConfig') || {
-    apiUrl: 'https://api.example.com',
-    timeout: 5000,
-    retries: 3
-};
-
-msg.url = config.apiUrl + '/endpoint';
-msg.timeout = config.timeout;
-return msg;
-```
-
-### Persistent storage with file store
-```javascript
-// Store to specific context store (configured in settings.js)
-context.set('persistentData', msg.payload, 'file');
-
-// Retrieve from file store
-let data = context.get('persistentData', 'file') || {};
-msg.payload = data;
-return msg;
+// 持久化（需在 settings.js 配置 file store）
+context.set('key', value, 'file');
 ```
 
 ## Error Handling
 
-### Try-catch with error node trigger
 ```javascript
 try {
-    // Risky operation
     let data = JSON.parse(msg.payload);
-    msg.payload = data.value * 2;
     return msg;
 } catch (error) {
-    // Trigger catch node
     node.error("Parse error: " + error.message, msg);
     return null;
 }
 ```
 
-### Validation with detailed errors
+### 带错误输出的验证
 ```javascript
-// Validate input with detailed error messages
 const errors = [];
-
-if (!msg.payload) {
-    errors.push("Payload is required");
-}
-
-if (typeof msg.payload !== 'object') {
-    errors.push("Payload must be an object");
-}
-
-if (!msg.payload.id) {
-    errors.push("ID field is required");
-}
-
+if (!msg.payload) errors.push("Payload is required");
 if (errors.length > 0) {
-    msg.payload = {
-        error: true,
-        messages: errors,
-        original: msg.payload
-    };
+    msg.payload = { error: true, messages: errors };
     node.error("Validation failed", msg);
-    return [null, msg];  // Send to error output
-} else {
-    return [msg, null];  // Send to success output
+    return [null, msg];
 }
+return [msg, null];
 ```
 
-### Retry logic
+### 重试逻辑
 ```javascript
-// Retry failed operations
 let retries = context.get('retries') || 0;
-const maxRetries = 3;
-
-function attemptOperation() {
-    try {
-        // Simulate operation that might fail
-        if (Math.random() > 0.5) {
-            throw new Error("Random failure");
-        }
-
-        // Success
-        msg.payload = "Operation successful";
-        context.set('retries', 0);
-        return msg;
-
-    } catch (error) {
-        retries++;
-        context.set('retries', retries);
-
-        if (retries < maxRetries) {
-            node.warn(`Attempt ${retries} failed, retrying...`);
-            setTimeout(() => {
-                node.send(attemptOperation());
-                node.done();
-            }, 1000 * retries);  // Exponential backoff
-            return null;
-        } else {
-            node.error(`Failed after ${maxRetries} attempts`, msg);
-            context.set('retries', 0);
-            return null;
-        }
-    }
-}
-
-return attemptOperation();
-```
-
-## Data Transformation
-
-### Array processing
-```javascript
-// Process array with map, filter, reduce
-if (Array.isArray(msg.payload)) {
-    msg.payload = msg.payload
-        .filter(item => item.active)
-        .map(item => ({
-            id: item.id,
-            name: item.name.toUpperCase(),
-            value: item.value * 1.1
-        }))
-        .reduce((acc, item) => {
-            acc[item.id] = item;
-            return acc;
-        }, {});
-}
-return msg;
-```
-
-### CSV to JSON
-```javascript
-// Convert CSV string to JSON
-const lines = msg.payload.split('\n');
-const headers = lines[0].split(',').map(h => h.trim());
-const data = [];
-
-for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '') continue;
-
-    const values = lines[i].split(',');
-    const obj = {};
-
-    headers.forEach((header, index) => {
-        obj[header] = values[index]?.trim() || '';
-    });
-
-    data.push(obj);
-}
-
-msg.payload = data;
-return msg;
-```
-
-### JSON flattening
-```javascript
-// Flatten nested object
-function flatten(obj, prefix = '') {
-    let result = {};
-
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            const newKey = prefix ? `${prefix}.${key}` : key;
-
-            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-                Object.assign(result, flatten(obj[key], newKey));
-            } else {
-                result[newKey] = obj[key];
-            }
-        }
-    }
-
-    return result;
-}
-
-msg.payload = flatten(msg.payload);
-return msg;
-```
-
-## Time-based Operations
-
-### Rate limiting
-```javascript
-// Limit messages to 1 per second
-const lastTime = context.get('lastTime') || 0;
-const now = Date.now();
-
-if (now - lastTime < 1000) {
-    return null;  // Drop message
-}
-
-context.set('lastTime', now);
-return msg;
-```
-
-### Time window aggregation
-```javascript
-// Collect messages for 5 seconds then send batch
-let buffer = context.get('buffer') || [];
-let windowStart = context.get('windowStart') || Date.now();
-
-buffer.push(msg.payload);
-
-if (Date.now() - windowStart > 5000) {
-    msg.payload = {
-        count: buffer.length,
-        data: buffer,
-        window: {
-            start: new Date(windowStart).toISOString(),
-            end: new Date().toISOString()
-        }
-    };
-
-    context.set('buffer', []);
-    context.set('windowStart', Date.now());
-
+try {
+    // operation
+    context.set('retries', 0);
     return msg;
-} else {
-    context.set('buffer', buffer);
+} catch (error) {
+    if (++retries < 3) {
+        context.set('retries', retries);
+        setTimeout(() => node.send(msg), 1000 * retries);
+    } else {
+        node.error(`Failed after 3 attempts`, msg);
+        context.set('retries', 0);
+    }
     return null;
 }
 ```
 
-### Scheduled operations
+## Data Transformation
+
 ```javascript
-// Run operation at specific time
-const now = new Date();
-const scheduledHour = 14;  // 2 PM
-
-if (now.getHours() === scheduledHour && !context.get('ranToday')) {
-    context.set('ranToday', true);
-
-    // Reset flag at midnight
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    setTimeout(() => {
-        context.set('ranToday', false);
-    }, tomorrow - now);
-
-    msg.payload = "Scheduled operation executed";
-    return msg;
+// 数组处理
+if (Array.isArray(msg.payload)) {
+    msg.payload = msg.payload
+        .filter(item => item.active)
+        .map(item => ({ id: item.id, value: item.value * 1.1 }));
 }
 
+// CSV → JSON
+const [headers, ...rows] = msg.payload.split('\n').map(l => l.split(','));
+msg.payload = rows.map(r => Object.fromEntries(headers.map((h, i) => [h.trim(), r[i]?.trim()])));
+```
+
+## Time-based Operations
+
+```javascript
+// 简单限流
+const last = context.get('lastTime') || 0;
+if (Date.now() - last < 1000) return null;
+context.set('lastTime', Date.now());
+
+// 时间窗口聚合
+let buffer = context.get('buffer') || [];
+let start = context.get('windowStart') || Date.now();
+buffer.push(msg.payload);
+if (Date.now() - start > 5000) {
+    msg.payload = { count: buffer.length, data: buffer };
+    context.set('buffer', []); context.set('windowStart', Date.now());
+    return msg;
+}
+context.set('buffer', buffer);
 return null;
 ```
 
 ## Advanced Patterns
 
-### State machine
+### 状态机
 ```javascript
-// Simple state machine implementation
-const states = {
-    IDLE: 'idle',
-    PROCESSING: 'processing',
-    ERROR: 'error',
-    COMPLETE: 'complete'
-};
-
-let currentState = context.get('state') || states.IDLE;
-const event = msg.topic;
-
-switch (currentState) {
-    case states.IDLE:
-        if (event === 'start') {
-            currentState = states.PROCESSING;
-            msg.payload = "Started processing";
-        }
-        break;
-
-    case states.PROCESSING:
-        if (event === 'complete') {
-            currentState = states.COMPLETE;
-            msg.payload = "Processing complete";
-        } else if (event === 'error') {
-            currentState = states.ERROR;
-            msg.payload = "Error occurred";
-        }
-        break;
-
-    case states.ERROR:
-        if (event === 'reset') {
-            currentState = states.IDLE;
-            msg.payload = "Reset to idle";
-        }
-        break;
-
-    case states.COMPLETE:
-        if (event === 'reset') {
-            currentState = states.IDLE;
-            msg.payload = "Reset to idle";
-        }
-        break;
-}
-
-context.set('state', currentState);
-msg.state = currentState;
+const S = { IDLE: 'idle', PROCESSING: 'processing', ERROR: 'error', COMPLETE: 'complete' };
+let state = context.get('state') || S.IDLE;
+if (state === S.IDLE && msg.topic === 'start') state = S.PROCESSING;
+else if (state === S.PROCESSING && msg.topic === 'complete') state = S.COMPLETE;
+else if (state === S.PROCESSING && msg.topic === 'error') state = S.ERROR;
+else if ((state === S.ERROR || state === S.COMPLETE) && msg.topic === 'reset') state = S.IDLE;
+context.set('state', state);
+msg.state = state;
 return msg;
 ```
 
-### Message queue with priority
+### 熔断器
 ```javascript
-// Priority queue implementation
-let queue = context.get('queue') || [];
-
-// Add message to queue with priority
-if (msg.topic === 'enqueue') {
-    queue.push({
-        priority: msg.priority || 5,
-        payload: msg.payload,
-        timestamp: Date.now()
-    });
-
-    // Sort by priority (lower number = higher priority)
-    queue.sort((a, b) => a.priority - b.priority);
-    context.set('queue', queue);
-
-    msg.payload = `Queued. Position: ${queue.length}`;
-    return msg;
-}
-
-// Dequeue highest priority message
-if (msg.topic === 'dequeue') {
-    if (queue.length > 0) {
-        const item = queue.shift();
-        context.set('queue', queue);
-
-        msg.payload = item.payload;
-        msg.priority = item.priority;
-        msg.queueTime = Date.now() - item.timestamp;
-        return msg;
-    } else {
-        msg.payload = "Queue empty";
-        return msg;
-    }
-}
-
-return null;
-```
-
-### Circuit breaker pattern
-```javascript
-// Prevent cascading failures
-const CLOSED = 'closed';
-const OPEN = 'open';
-const HALF_OPEN = 'half_open';
-
-let state = context.get('circuitState') || CLOSED;
-let failures = context.get('failures') || 0;
-let lastFailTime = context.get('lastFailTime') || 0;
-
-const maxFailures = 3;
-const timeout = 60000;  // 1 minute
-
-// Check if circuit should reset
-if (state === OPEN && Date.now() - lastFailTime > timeout) {
-    state = HALF_OPEN;
-    node.status({fill:"yellow", shape:"ring", text:"half-open"});
-}
-
-if (state === OPEN) {
-    msg.payload = {
-        error: "Circuit breaker is open",
-        retryAfter: timeout - (Date.now() - lastFailTime)
-    };
-    return [null, msg];  // Error output
-}
-
-// Simulate operation
+const CLOSED = 'closed', OPEN = 'open', HALF = 'half_open';
+let st = context.get('cb') || { state: CLOSED, fails: 0, lastFail: 0 };
+if (st.state === OPEN && Date.now() - st.lastFail > 60000) st.state = HALF;
+if (st.state === OPEN) return [null, msg];
 try {
-    // Your operation here
-    if (Math.random() > 0.7) {
-        throw new Error("Operation failed");
-    }
-
-    // Success
-    if (state === HALF_OPEN) {
-        state = CLOSED;
-        failures = 0;
-        node.status({fill:"green", shape:"dot", text:"closed"});
-    }
-
-    context.set('circuitState', state);
-    context.set('failures', failures);
-
-    return [msg, null];  // Success output
-
-} catch (error) {
-    failures++;
-
-    if (failures >= maxFailures) {
-        state = OPEN;
-        lastFailTime = Date.now();
-        node.status({fill:"red", shape:"ring", text:"open"});
-    }
-
-    context.set('circuitState', state);
-    context.set('failures', failures);
-    context.set('lastFailTime', lastFailTime);
-
-    msg.payload = {
-        error: error.message,
-        failures: failures,
-        state: state
-    };
-
-    return [null, msg];  // Error output
+    // operation
+    if (st.state === HALF) { st.state = CLOSED; st.fails = 0; }
+    context.set('cb', st);
+    return [msg, null];
+} catch (e) {
+    if (++st.fails >= 3) { st.state = OPEN; st.lastFail = Date.now(); }
+    context.set('cb', st);
+    return [null, msg];
 }
-```
-
-## Logging and Debugging
-
-### Structured logging
-```javascript
-// Create structured log entries
-function log(level, message, data = {}) {
-    const logEntry = {
-        timestamp: new Date().toISOString(),
-        level: level,
-        message: message,
-        nodeId: node.id,
-        nodeName: node.name || 'unnamed',
-        data: data
-    };
-
-    switch(level) {
-        case 'error':
-            node.error(JSON.stringify(logEntry));
-            break;
-        case 'warn':
-            node.warn(JSON.stringify(logEntry));
-            break;
-        default:
-            node.log(JSON.stringify(logEntry));
-    }
-}
-
-// Usage
-log('info', 'Processing started', {count: msg.payload.length});
-log('error', 'Processing failed', {error: error.message});
-
-return msg;
-```
-
-### Performance monitoring
-```javascript
-// Measure execution time
-const startTime = Date.now();
-
-// Your operation here
-// ...
-
-const executionTime = Date.now() - startTime;
-
-msg.performance = {
-    executionTime: executionTime,
-    timestamp: new Date().toISOString()
-};
-
-if (executionTime > 1000) {
-    node.warn(`Slow execution: ${executionTime}ms`);
-}
-
-return msg;
 ```

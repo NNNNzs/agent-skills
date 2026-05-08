@@ -1,502 +1,182 @@
 # Node-RED Node Schemas Reference
 
-## Core Node Types
+通用字段（所有节点都有）：`id`（无连字符 UUID）、`type`、`z`（tab ID）、`name`、`x`/`y`（坐标）、`wires`（输出连线数组）。
+
+## Core Nodes
 
 ### inject
-Triggers flows manually or on a schedule.
-
-```json
-{
-  "id": "unique-id",
-  "type": "inject",
-  "z": "tab-id",
-  "name": "Node Name",
-  "props": [
-    {"p": "payload"},
-    {"p": "topic", "vt": "str"}
-  ],
-  "repeat": "",           // Seconds between repeats (empty = no repeat)
-  "crontab": "",         // Cron expression (e.g., "0 0 * * *")
-  "once": false,         // Trigger on deploy
-  "onceDelay": 0.1,      // Seconds delay if once=true
-  "topic": "",           // Topic string
-  "payload": "",         // Payload content
-  "payloadType": "str",  // str|num|bool|json|bin|date|env|flow|global
-  "x": 100,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `props` | array | 要注入的属性，如 `[{"p":"payload"},{"p":"topic","vt":"str"}]` |
+| `repeat` | string | 重复间隔（秒），空=不重复 |
+| `crontab` | string | cron 表达式 |
+| `once` | bool | 部署时触发一次 |
+| `onceDelay` | number | once=true 时的延迟秒数 |
+| `topic` | string | topic 值 |
+| `payload` | string | payload 值 |
+| `payloadType` | string | `str\|num\|bool\|json\|bin\|date\|env\|flow\|global` |
 
 ### function
-Execute JavaScript code with access to message and context.
-
-```json
-{
-  "id": "unique-id",
-  "type": "function",
-  "z": "tab-id",
-  "name": "Process Data",
-  "func": "// JavaScript code\nreturn msg;",
-  "outputs": 1,          // Number of outputs
-  "noerr": 0,           // 0=show errors, 1=hide
-  "initialize": "",      // Setup code (run on deploy)
-  "finalize": "",       // Cleanup code (run on close)
-  "libs": [],           // External libraries
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `func` | string | JavaScript 代码 |
+| `outputs` | number | 输出端口数 |
+| `noerr` | number | 0=显示错误, 1=隐藏 |
+| `initialize` | string | 部署时执行的初始化代码 |
+| `finalize` | string | 关闭时执行的清理代码 |
+| `libs` | array | 外部库 |
 
 ### debug
-Output messages to debug sidebar or console.
-
-```json
-{
-  "id": "unique-id",
-  "type": "debug",
-  "z": "tab-id",
-  "name": "Debug Output",
-  "active": true,        // Enable/disable output
-  "tosidebar": true,     // Show in debug sidebar
-  "console": false,      // Log to system console
-  "tostatus": false,     // Show as node status
-  "complete": "payload", // What to output
-  "targetType": "msg",   // msg|full
-  "statusVal": "",
-  "statusType": "auto",
-  "x": 500,
-  "y": 100,
-  "wires": []
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `active` | bool | 是否启用 |
+| `tosidebar` | bool | 显示在调试侧栏 |
+| `console` | bool | 同时输出到系统控制台 |
+| `tostatus` | bool | 显示为节点状态 |
+| `complete` | string | 输出内容：`payload\|complete\|undefined` |
+| `targetType` | string | `msg\|full` |
 
 ### change
-Set, change, delete, or move message properties.
-
 ```json
-{
-  "id": "unique-id",
-  "type": "change",
-  "z": "tab-id",
-  "name": "Set Properties",
-  "rules": [
-    {
-      "t": "set",      // set|change|delete|move
-      "p": "payload",  // Property path
-      "pt": "msg",     // msg|flow|global
-      "to": "value",   // Target value
-      "tot": "str"     // str|num|bool|json|bin|date|env|msg|flow|global
-    }
-  ],
-  "action": "",
-  "property": "",
-  "from": "",
-  "to": "",
-  "reg": false,        // Use regex
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
+{"type": "change", "rules": [{"t": "set", "p": "payload", "pt": "msg", "to": "value", "tot": "str"}]}
 ```
+- `t`: set|change|delete|move
+- `pt`: msg|flow|global（属性来源）
+- `tot`: str|num|bool|json|bin|date|env|msg|flow|global（目标类型）
 
 ### switch
-Route messages based on property values.
-
 ```json
-{
-  "id": "unique-id",
-  "type": "switch",
-  "z": "tab-id",
-  "name": "Route Messages",
-  "property": "payload",
-  "propertyType": "msg",
-  "rules": [
-    {"t": "eq", "v": "value1", "vt": "str"},
-    {"t": "lt", "v": "10", "vt": "num"},
-    {"t": "cont", "v": "text", "vt": "str"}
-  ],
-  "checkall": "true",    // Check all rules
-  "repair": false,
-  "outputs": 2,          // Number of outputs (matches rules)
-  "x": 300,
-  "y": 100,
-  "wires": [[], []]
-}
+{"type": "switch", "property": "payload", "propertyType": "msg",
+ "rules": [{"t": "eq", "v": "val", "vt": "str"}, {"t": "else"}],
+ "checkall": "true", "outputs": 2}
 ```
+- `t`: eq|neq|lt|lte|gt|gte|btwn|cont|regex|true|false|null|nnull|jsonata|else
+- `vt`: str|num|bool|json|env|flow|global
 
 ### delay
-Delay or rate limit messages.
-
-```json
-{
-  "id": "unique-id",
-  "type": "delay",
-  "z": "tab-id",
-  "name": "Rate Limit",
-  "pauseType": "rate",   // delay|rate|queue|random
-  "timeout": "5",
-  "timeoutUnits": "seconds",
-  "rate": "1",
-  "nbRateUnits": "1",
-  "rateUnits": "second",
-  "randomFirst": "1",
-  "randomLast": "5",
-  "randomUnits": "seconds",
-  "drop": false,         // Drop intermediate messages
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `pauseType` | string | `delay\|rate\|queue\|random` |
+| `timeout` | string | 延迟时间 |
+| `timeoutUnits` | string | `seconds\|minutes\|hours\|days` |
+| `rate` | string | 每时间段允许的消息数 |
+| `rateUnits` | string | `second\|minute\|hour` |
+| `drop` | bool | 超出速率时丢弃中间消息 |
 
 ## Network Nodes
 
 ### http in
-Create HTTP endpoint.
-
-```json
-{
-  "id": "unique-id",
-  "type": "http in",
-  "z": "tab-id",
-  "name": "API Endpoint",
-  "url": "/api/endpoint",
-  "method": "get",       // get|post|put|delete|patch
-  "upload": false,       // Accept file uploads
-  "swaggerDoc": "",      // OpenAPI documentation
-  "x": 100,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `url` | string | 端点路径，如 `/api/data` |
+| `method` | string | `get\|post\|put\|delete\|patch` |
+| `upload` | bool | 是否接受文件上传 |
+| `swaggerDoc` | string | OpenAPI 文档路径 |
 
 ### http response
-Send HTTP response.
-
-```json
-{
-  "id": "unique-id",
-  "type": "http response",
-  "z": "tab-id",
-  "name": "Send Response",
-  "statusCode": "",      // Override status code
-  "headers": {},         // Custom headers
-  "x": 500,
-  "y": 100,
-  "wires": []
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `statusCode` | string | 覆盖状态码 |
+| `headers` | object | 自定义响应头 |
 
 ### http request
-Make HTTP requests.
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `method` | string | HTTP 方法 |
+| `ret` | string | 返回类型：`txt\|bin\|obj` |
+| `url` | string | 请求 URL |
+| `tls` | string | TLS 配置节点 ID |
 
-```json
-{
-  "id": "unique-id",
-  "type": "http request",
-  "z": "tab-id",
-  "name": "API Call",
-  "method": "GET",       // GET|POST|PUT|DELETE|use msg.method
-  "ret": "txt",         // txt|bin|obj
-  "paytoqs": "ignore",  // ignore|query|body
-  "url": "https://api.example.com",
-  "tls": "",            // TLS config node ID
-  "persist": false,     // Keep connection alive
-  "proxy": "",          // Proxy config node ID
-  "authType": "",       // basic|bearer
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
-
-### mqtt in
-Subscribe to MQTT topics.
-
-```json
-{
-  "id": "unique-id",
-  "type": "mqtt in",
-  "z": "tab-id",
-  "name": "MQTT Subscribe",
-  "topic": "sensors/+/temperature",
-  "qos": "2",           // 0|1|2
-  "datatype": "auto",   // auto|json|utf8|base64
-  "broker": "broker-config-id",
-  "nl": false,          // Remove newlines
-  "rap": true,          // Report as parsed
-  "rh": 0,              // Retain handling
-  "x": 100,
-  "y": 100,
-  "wires": [[]]
-}
-```
-
-### mqtt out
-Publish to MQTT topics.
-
-```json
-{
-  "id": "unique-id",
-  "type": "mqtt out",
-  "z": "tab-id",
-  "name": "MQTT Publish",
-  "topic": "",          // Can use msg.topic
-  "qos": "",           // 0|1|2 or use msg.qos
-  "retain": "",        // true|false or use msg.retain
-  "respTopic": "",     // Response topic
-  "contentType": "",   // MQTT 5.0 content type
-  "userProps": "",     // MQTT 5.0 user properties
-  "correl": "",        // MQTT 5.0 correlation data
-  "expiry": "",        // MQTT 5.0 message expiry
-  "broker": "broker-config-id",
-  "x": 500,
-  "y": 100,
-  "wires": []
-}
-```
+### mqtt in / mqtt out
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `topic` | string | MQTT 主题，支持通配符 `+` `#` |
+| `qos` | string | `0\|1\|2` |
+| `datatype` | string | `auto\|json\|utf8\|base64`（仅 mqtt in） |
+| `broker` | string | 引用 mqtt-broker 配置节点 ID |
+| `retain` | string | 是否保留消息（仅 mqtt out） |
 
 ### websocket in/out
-WebSocket communication nodes.
-
-```json
-{
-  "id": "unique-id",
-  "type": "websocket in",
-  "z": "tab-id",
-  "name": "WS Receive",
-  "server": "",         // Server config ID
-  "client": "client-config-id",
-  "x": 100,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `server` | string | WS server 配置节点 ID |
+| `client` | string | WS client 配置节点 ID |
 
 ## Storage Nodes
 
 ### file in
-Read file from filesystem.
-
-```json
-{
-  "id": "unique-id",
-  "type": "file in",
-  "z": "tab-id",
-  "name": "Read File",
-  "filename": "/path/to/file",
-  "format": "utf8",     // utf8|lines|stream|base64
-  "chunk": false,       // Stream in chunks
-  "sendError": false,   // Send errors to catch node
-  "encoding": "none",   // Encoding for legacy
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `filename` | string | 文件路径 |
+| `format` | string | `utf8\|lines\|stream\|base64` |
+| `chunk` | bool | 是否分块读取 |
 
 ### file
-Write file to filesystem.
-
-```json
-{
-  "id": "unique-id",
-  "type": "file",
-  "z": "tab-id",
-  "name": "Write File",
-  "filename": "/path/to/file",
-  "appendNewline": true,
-  "createDir": false,   // Create directory if missing
-  "overwriteFile": "true", // true|false|delete
-  "encoding": "none",
-  "x": 500,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `filename` | string | 文件路径 |
+| `appendNewline` | bool | 末尾追加换行 |
+| `createDir` | bool | 目录不存在时创建 |
+| `overwriteFile` | string | `true\|false\|delete` |
 
 ## Logic Nodes
 
 ### range
-Map numeric ranges.
-
-```json
-{
-  "id": "unique-id",
-  "type": "range",
-  "z": "tab-id",
-  "name": "Scale Values",
-  "minin": "0",
-  "maxin": "100",
-  "minout": "0",
-  "maxout": "1",
-  "action": "scale",    // scale|clamp|roll
-  "round": false,       // Round to integer
-  "property": "payload",
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `minin`/`maxin` | string | 输入范围 |
+| `minout`/`maxout` | string | 输出范围 |
+| `action` | string | `scale\|clamp\|roll` |
 
 ### template
-Apply Mustache template.
-
-```json
-{
-  "id": "unique-id",
-  "type": "template",
-  "z": "tab-id",
-  "name": "Format Output",
-  "field": "payload",
-  "fieldType": "msg",
-  "format": "handlebars",  // handlebars|mustache|html|json|yaml|text
-  "syntax": "mustache",
-  "template": "Hello {{payload}}!",
-  "output": "str",         // str|json|yaml
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `field` | string | 输出字段，通常 `payload` |
+| `syntax` | string | `mustache\|handlebars` |
+| `template` | string | 模板内容 |
 
 ### join
-Join message sequences.
-
-```json
-{
-  "id": "unique-id",
-  "type": "join",
-  "z": "tab-id",
-  "name": "Combine Messages",
-  "mode": "auto",        // auto|custom
-  "build": "object",     // object|array|string|buffer
-  "property": "payload",
-  "propertyType": "msg",
-  "key": "topic",
-  "joiner": "\\n",
-  "joinerType": "str",
-  "accumulate": false,
-  "timeout": "",
-  "count": "",
-  "reduceRight": false,
-  "reduceExp": "",
-  "reduceInit": "",
-  "reduceInitType": "",
-  "reduceFixup": "",
-  "x": 400,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `mode` | string | `auto\|custom` |
+| `build` | string | `object\|array\|string\|buffer` |
+| `key` | string | 合并键（build=object 时） |
+| `joiner` | string | 连接符（build=string 时） |
 
 ### split
-Split messages into sequences.
-
-```json
-{
-  "id": "unique-id",
-  "type": "split",
-  "z": "tab-id",
-  "name": "Split Array",
-  "splt": "\\n",        // Split character
-  "spltType": "str",    // str|bin|len
-  "arraySplt": 1,       // Array split length
-  "arraySpltType": "len",
-  "stream": false,      // Handle as stream
-  "addname": "",        // Add property name
-  "x": 300,
-  "y": 100,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `splt` | string | 分隔符 |
+| `spltType` | string | `str\|bin\|len` |
+| `arraySplt` | number | 数组分组大小 |
 
 ## Error Handling
 
 ### catch
-Catch node errors.
-
-```json
-{
-  "id": "unique-id",
-  "type": "catch",
-  "z": "tab-id",
-  "name": "Error Handler",
-  "scope": ["node-id-1", "node-id-2"],  // Specific nodes or null for all
-  "uncaught": false,    // Catch uncaught errors
-  "x": 100,
-  "y": 200,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `scope` | array | 捕获特定节点 ID，空=全部 |
+| `uncaught` | bool | 是否捕获未处理的错误 |
 
 ### status
-Monitor node status.
-
-```json
-{
-  "id": "unique-id",
-  "type": "status",
-  "z": "tab-id",
-  "name": "Status Monitor",
-  "scope": ["node-id"],  // Specific nodes or null for all
-  "x": 100,
-  "y": 300,
-  "wires": [[]]
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `scope` | array | 监控特定节点 ID，空=全部 |
 
 ## Configuration Nodes
 
 ### mqtt-broker
-MQTT broker configuration (referenced by MQTT nodes).
-
-```json
-{
-  "id": "broker-config-id",
-  "type": "mqtt-broker",
-  "name": "MQTT Broker",
-  "broker": "localhost",
-  "port": "1883",
-  "clientid": "",
-  "autoConnect": true,
-  "usetls": false,
-  "protocolVersion": "4",  // 3|4|5
-  "keepalive": "60",
-  "cleansession": true,
-  "birthTopic": "",
-  "birthQos": "0",
-  "birthPayload": "",
-  "birthMsg": {},
-  "closeTopic": "",
-  "closeQos": "0",
-  "closePayload": "",
-  "closeMsg": {},
-  "willTopic": "",
-  "willQos": "0",
-  "willPayload": "",
-  "willMsg": {},
-  "sessionExpiry": ""
-}
-```
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `broker` | string | broker 地址 |
+| `port` | string | 端口 |
+| `clientid` | string | 客户端 ID |
+| `protocolVersion` | string | `3\|4\|5` |
+| `keepalive` | string | 心跳间隔（秒） |
+| `cleansession` | bool | 是否清除会话 |
 
 ## Custom Properties
 
-### Environment Variables
-Use `$(ENV_VAR)` syntax in string properties.
-
-### JSONata Expressions
-Use JSONata for dynamic property values:
-- Set property type to "jsonata"
-- Use expressions like `$sum(payload)` or `payload.temperature * 1.8 + 32`
-
-### Message Properties
-Common message properties:
-- `msg.payload`: Primary data
-- `msg.topic`: Message topic/category
-- `msg._msgid`: Unique message ID
-- `msg.parts`: Split/join metadata
-- `msg.req`/`msg.res`: HTTP request/response objects
-- `msg.error`: Error information (in catch nodes)
+- 环境变量：节点属性中 `$(ENV_VAR)`，function 中 `env.get("ENV_VAR")`
+- JSONata：属性类型设为 `"jsonata"`，如 `$sum(payload)`
+- 常用 msg 属性：`payload`（主数据）、`topic`（分类）、`_msgid`（唯一 ID）、`parts`（split/join 元数据）、`req`/`res`（HTTP 对象）
