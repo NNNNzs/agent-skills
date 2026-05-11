@@ -1,7 +1,7 @@
 ---
 name: ruoyi-api
-version: 1.1.0
-description: 若依(RuoYi)系统管理 API 调用工具。当用户需要操作若依系统的用户、角色、菜单、部门、字典、参数配置时激活。触发词："若依"、"ruoyi"、"创建用户"、"分配角色"、"创建菜单"、"字典类型"、"参数配置"、"岗位管理"。需要配置 .env 文件（RUOYI_BASE_URL、RUOYI_TOKEN）。
+version: 1.2.0
+description: 若依(RuoYi)系统管理 API 调用工具。当用户需要操作若依系统的用户、角色、菜单、部门、岗位、字典、参数配置时激活。触发词："若依"、"ruoyi"、"创建用户"、"分配角色"、"创建菜单"、"岗位管理"、"字典类型"、"参数配置"。需要配置 .env 文件（RUOYI_BASE_URL、RUOYI_TOKEN）。
 ---
 
 # ruoyi-api
@@ -80,6 +80,7 @@ API 返回已解包为统一格式：
 - **角色管理** - [references/role.md](references/role.md)
 - **菜单管理** - [references/menu.md](references/menu.md)
 - **部门管理** - [references/dept.md](references/dept.md)
+- **岗位管理** - [references/post.md](references/post.md)
 - **字典类型管理** - [references/dict-type.md](references/dict-type.md)
 - **字典数据管理** - [references/dict-data.md](references/dict-data.md)
 - **参数配置管理** - [references/config.md](references/config.md)

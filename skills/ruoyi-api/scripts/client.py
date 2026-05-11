@@ -384,6 +384,13 @@ class RuoyiAPI:
         """删除菜单"""
         return self.client.delete(f'/system/menu/{menu_id}')
 
+    def update_menu_sort(self, menu_id: int, order_num: int) -> Dict:
+        """更新菜单排序"""
+        return self.client.put('/system/menu/updateSort', {
+            'menuId': menu_id,
+            'orderNum': order_num
+        })
+
     # ==================== 部门管理 ====================
 
     def list_depts(self, params: Dict = None) -> Dict:
@@ -423,6 +430,10 @@ class RuoyiAPI:
     def list_posts(self, params: Dict = None) -> Dict:
         """查询岗位列表"""
         return self.client.get('/system/post/list', params)
+
+    def get_post(self, post_id: int) -> Dict:
+        """获取岗位详情"""
+        return self.client.get(f'/system/post/{post_id}')
 
     def create_post(self, post_data: Dict) -> Dict:
         """创建岗位"""
@@ -606,13 +617,14 @@ def main():
 
     parser = argparse.ArgumentParser(description='若依系统 API 客户端')
     parser.add_argument('action', help='操作类型', choices=[
-        'list-users', 'get-user', 'create-user', 'delete-user',
-        'list-roles', 'get-role', 'create-role', 'delete-role',
-        'list-menus', 'get-menu', 'create-menu', 'delete-menu',
-        'list-depts', 'get-dept', 'create-dept', 'delete-dept',
-        'list-dict-types', 'get-dict-type', 'create-dict-type', 'update-dict-type', 'delete-dict-type',
-        'list-dict-data', 'get-dict-data', 'create-dict-data', 'update-dict-data', 'delete-dict-data',
-        'list-configs', 'get-config', 'get-config-by-key', 'create-config', 'update-config', 'delete-config'
+        'list-users', 'get-user', 'create-user', 'update-user', 'delete-user', 'reset-password', 'change-user-status',
+        'list-roles', 'get-role', 'create-role', 'update-role', 'delete-role', 'change-role-status', 'update-data-scope',
+        'list-menus', 'get-menu', 'create-menu', 'update-menu', 'delete-menu', 'update-menu-sort',
+        'list-depts', 'get-dept', 'create-dept', 'update-dept', 'delete-dept',
+        'list-posts', 'get-post', 'create-post', 'update-post', 'delete-post',
+        'list-dict-types', 'get-dict-type', 'create-dict-type', 'update-dict-type', 'delete-dict-type', 'refresh-dict-cache',
+        'list-dict-data', 'get-dict-data', 'get-dict-data-by-type', 'create-dict-data', 'update-dict-data', 'delete-dict-data',
+        'list-configs', 'get-config', 'get-config-by-key', 'create-config', 'update-config', 'delete-config', 'refresh-config-cache'
     ])
     parser.add_argument('--config', '-c', help='配置文件路径')
     parser.add_argument('--id', type=int, help='ID')
@@ -631,38 +643,71 @@ def main():
         params = json.loads(args.params) if args.params else None
 
         # 执行操作
+        # 用户管理
         if args.action == 'list-users':
             result = api.list_users(params)
         elif args.action == 'get-user' and args.id:
             result = api.get_user(args.id)
         elif args.action == 'create-user' and data:
             result = api.create_user(data)
+        elif args.action == 'update-user' and data:
+            result = api.update_user(data)
         elif args.action == 'delete-user' and args.id:
             result = api.delete_user(str(args.id))
+        elif args.action == 'reset-password' and args.id and data:
+            result = api.reset_password(args.id, data.get('password', ''))
+        elif args.action == 'change-user-status' and args.id and data:
+            result = api.change_user_status(args.id, data.get('status', '0'))
+        # 角色管理
         elif args.action == 'list-roles':
             result = api.list_roles(params)
         elif args.action == 'get-role' and args.id:
             result = api.get_role(args.id)
         elif args.action == 'create-role' and data:
             result = api.create_role(data)
+        elif args.action == 'update-role' and data:
+            result = api.update_role(data)
         elif args.action == 'delete-role' and args.id:
             result = api.delete_role(str(args.id))
+        elif args.action == 'change-role-status' and args.id and data:
+            result = api.change_role_status(args.id, data.get('status', '0'))
+        elif args.action == 'update-data-scope' and args.id and data:
+            result = api.update_data_scope(args.id, data.get('dataScope', '1'), data.get('deptIds'))
+        # 菜单管理
         elif args.action == 'list-menus':
             result = api.list_menus(params)
         elif args.action == 'get-menu' and args.id:
             result = api.get_menu(args.id)
         elif args.action == 'create-menu' and data:
             result = api.create_menu(data)
+        elif args.action == 'update-menu' and data:
+            result = api.update_menu(data)
         elif args.action == 'delete-menu' and args.id:
             result = api.delete_menu(args.id)
+        elif args.action == 'update-menu-sort' and args.id and data:
+            result = api.update_menu_sort(args.id, data.get('orderNum', 0))
+        # 部门管理
         elif args.action == 'list-depts':
             result = api.list_depts(params)
         elif args.action == 'get-dept' and args.id:
             result = api.get_dept(args.id)
         elif args.action == 'create-dept' and data:
             result = api.create_dept(data)
+        elif args.action == 'update-dept' and data:
+            result = api.update_dept(data)
         elif args.action == 'delete-dept' and args.id:
             result = api.delete_dept(args.id)
+        # 岗位管理
+        elif args.action == 'list-posts':
+            result = api.list_posts(params)
+        elif args.action == 'get-post' and args.id:
+            result = api.get_post(args.id)
+        elif args.action == 'create-post' and data:
+            result = api.create_post(data)
+        elif args.action == 'update-post' and data:
+            result = api.update_post(data)
+        elif args.action == 'delete-post' and args.id:
+            result = api.delete_post(str(args.id))
         # 字典类型管理
         elif args.action == 'list-dict-types':
             result = api.list_dict_types(params)
@@ -674,11 +719,16 @@ def main():
             result = api.update_dict_type(data)
         elif args.action == 'delete-dict-type' and args.id:
             result = api.delete_dict_type(str(args.id))
+        elif args.action == 'refresh-dict-cache':
+            result = api.refresh_dict_cache()
         # 字典数据管理
         elif args.action == 'list-dict-data':
             result = api.list_dict_data(params)
         elif args.action == 'get-dict-data' and args.id:
             result = api.get_dict_data(args.id)
+        elif args.action == 'get-dict-data-by-type' and args.id:
+            # id 参数用于传递 dict_type 字符串
+            result = api.get_dict_data_by_type(str(args.id))
         elif args.action == 'create-dict-data' and data:
             result = api.create_dict_data(data)
         elif args.action == 'update-dict-data' and data:
@@ -690,12 +740,17 @@ def main():
             result = api.list_configs(params)
         elif args.action == 'get-config' and args.id:
             result = api.get_config(args.id)
+        elif args.action == 'get-config-by-key' and args.id:
+            # id 参数用于传递 config_key 字符串
+            result = api.get_config_by_key(str(args.id))
         elif args.action == 'create-config' and data:
             result = api.create_config(data)
         elif args.action == 'update-config' and data:
             result = api.update_config(data)
         elif args.action == 'delete-config' and args.id:
             result = api.delete_config(str(args.id))
+        elif args.action == 'refresh-config-cache':
+            result = api.refresh_config_cache()
 
         if result:
             print(json.dumps(result, ensure_ascii=False, indent=2))
