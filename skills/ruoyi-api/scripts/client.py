@@ -17,8 +17,8 @@ import urllib.parse
 class RuoyiClient:
     """若依系统 API 客户端"""
 
-    def __init__(self, config_path: str = None, skip_validation: bool = False):
-        self.config = self._load_config(config_path)
+    def __init__(self, config_path: str = None, skip_validation: bool = False, project_dir: str = None):
+        self.config = self._load_config(config_path, project_dir)
         self.base_url = self.config.get('baseUrl', 'http://localhost:3700')
         self.token = self.config.get('token', '')
         self.headers = {
@@ -73,7 +73,7 @@ class RuoyiClient:
             print(f"✗ 连接失败: {e}")
             print(f"   请检查 base_url 和网络连接")
 
-    def _load_config(self, config_path: str = None) -> Dict:
+    def _load_config(self, config_path: str = None, project_dir: str = None) -> Dict:
         """加载配置文件"""
         # 优先从环境变量读取
         base_url = os.getenv('RUOYI_BASE_URL')
@@ -102,10 +102,13 @@ class RuoyiClient:
                     return {'baseUrl': base_url, 'token': token}
 
         # 按优先级查找 .env 文件
-        env_paths = [
+        env_paths = []
+        if project_dir:
+            env_paths.append(Path(project_dir) / '.env')
+        env_paths.extend([
             Path.cwd() / '.env',  # 当前工作目录
             Path.home() / '.env',  # 用户 HOME 目录
-        ]
+        ])
 
         for env_file in env_paths:
             if env_file.exists():
@@ -121,7 +124,9 @@ class RuoyiClient:
             "   export RUOYI_TOKEN=your_bearer_token_here\n\n"
             "2. 指定配置文件路径：\n"
             "   export RUOYI_CONFIG_PATH=/path/to/.env\n\n"
-            "3. 在当前目录或 HOME 目录创建 .env 文件"
+            "3. 传入项目目录：\n"
+            "   python3 scripts/client.py --project-dir /path/to/project list-users\n\n"
+            "4. 在当前目录或 HOME 目录创建 .env 文件"
         )
 
     def _parse_env_file(self, env_file: Path) -> tuple:
@@ -600,14 +605,15 @@ class RuoyiAPI:
         return self.client.delete('/system/config/refreshCache')
 
 
-def create_client(config_path: str = None, skip_validation: bool = False) -> RuoyiAPI:
+def create_client(config_path: str = None, project_dir: str = None, skip_validation: bool = False) -> RuoyiAPI:
     """创建 API 客户端
 
     Args:
         config_path: 配置文件路径（可选）
+        project_dir: 项目目录路径（可选，读取该目录下的 .env）
         skip_validation: 是否跳过连通性验证（默认 False）
     """
-    client = RuoyiClient(config_path, skip_validation)
+    client = RuoyiClient(config_path, skip_validation, project_dir)
     return RuoyiAPI(client)
 
 
@@ -627,6 +633,7 @@ def main():
         'list-configs', 'get-config', 'get-config-by-key', 'create-config', 'update-config', 'delete-config', 'refresh-config-cache'
     ])
     parser.add_argument('--config', '-c', help='配置文件路径')
+    parser.add_argument('--project-dir', help='项目目录路径，读取该目录下的 .env')
     parser.add_argument('--id', type=int, help='ID')
     parser.add_argument('--data', '-d', help='JSON 数据')
     parser.add_argument('--params', '-p', help='查询参数')
@@ -635,7 +642,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        api = create_client(args.config, skip_validation=args.skip_validation)
+        api = create_client(args.config, project_dir=args.project_dir, skip_validation=args.skip_validation)
         result = None
 
         # 解析 JSON 参数

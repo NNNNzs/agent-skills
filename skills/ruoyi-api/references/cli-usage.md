@@ -1,6 +1,9 @@
 # 命令行使用
 
 ```bash
+# 从指定项目目录读取 .env
+python3 scripts/client.py --project-dir /path/to/project list-users
+
 # 用户管理
 python3 scripts/client.py list-users --params '{"pageNum":1,"pageSize":10}'
 python3 scripts/client.py get-user --id 1

@@ -1,6 +1,6 @@
 ---
 name: ruoyi-api
-version: 1.2.0
+version: 1.3.0
 description: 若依(RuoYi)系统管理 API 调用工具。当用户需要操作若依系统的用户、角色、菜单、部门、岗位、字典、参数配置时激活。触发词："若依"、"ruoyi"、"创建用户"、"分配角色"、"创建菜单"、"岗位管理"、"字典类型"、"参数配置"。需要配置 .env 文件（RUOYI_BASE_URL、RUOYI_TOKEN）。
 ---
 
@@ -13,9 +13,10 @@ description: 若依(RuoYi)系统管理 API 调用工具。当用户需要操作�
 按以下优先级查找 `.env` 文件：
 
 1. **环境变量**（推荐）：设置 `RUOYI_BASE_URL` 和 `RUOYI_TOKEN`
-2. **指定配置文件**：`export RUOYI_CONFIG_PATH=/path/to/.env`
-3. **当前工作目录**：`./.env`
-4. **用户 HOME 目录**：`~/.env`
+2. **指定配置文件**：`export RUOYI_CONFIG_PATH=/path/to/.env` 或 `--config /path/to/.env`
+3. **项目目录**：`--project-dir /path/to/project` 读取 `<项目目录>/.env`
+4. **当前工作目录**：`./.env`
+5. **用户 HOME 目录**：`~/.env`
 
 `.env` 文件示例：
 
@@ -30,7 +31,13 @@ RUOYI_TOKEN=your_bearer_token_here
 
 获取 Token：登录若依 → 浏览器 Network → 请求头 `Authorization` 中 `Bearer ` 后的值。
 
-**跨目录使用**：当技能脚本从非项目目录执行时，使用 `RUOYI_CONFIG_PATH` 指定配置文件：
+**跨目录使用**：当技能脚本从非项目目录执行时，传入项目目录读取该目录下的 `.env`：
+
+```bash
+python3 scripts/client.py --project-dir /path/to/your/project list-users
+```
+
+也可以使用 `RUOYI_CONFIG_PATH` 直接指定配置文件：
 
 ```bash
 export RUOYI_CONFIG_PATH=/path/to/your/project/.env
