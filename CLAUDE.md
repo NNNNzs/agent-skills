@@ -29,6 +29,7 @@ agent-skills/
 ├── CLAUDE.md          # 本文件 - 项目索引
 ├── .env.example       # 环境变量配置示例
 ├── skills/            # 技能集合
+│   ├── mysql-query/         # MySQL 数据库查询工具
 │   ├── openapi-explorer/  # OpenAPI 文档解析工具
 │   └── ruoyi-api/        # 若依系统 API 调用工具
 └── packages/          # 构建包（可选）
@@ -70,6 +71,29 @@ npx skills add NNNNzs/agent-skills --skill ruoyi-api
 # 在项目根目录创建 .env 文件
 RUOYI_BASE_URL=http://localhost:3700
 RUOYI_TOKEN=your_bearer_token_here
+```
+
+### mysql-query
+
+MySQL 数据库查询工具，通过项目 .env 文件自动连接数据库并执行查询。
+
+- 🔍 查看表结构、索引、建表语句
+- 📊 数据查询、统计、验证一致性
+- 🗄️ 支持 JDBC URL 和分离配置两种格式
+- ⚠️ 危险操作（DELETE/DROP/TRUNCATE/ALTER）必须用户确认
+- 📦 零依赖（使用 Python 标准库）
+
+安装：
+```bash
+npx skills add NNNNzs/agent-skills --skill mysql-query
+```
+
+配置：
+```bash
+# 在项目根目录创建 .env 文件
+DB_URL=jdbc:mysql://host:port/database
+DB_USERNAME=username
+DB_PASSWORD=password
 ```
 
 ## 开发新技能
