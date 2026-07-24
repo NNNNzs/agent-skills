@@ -1,0 +1,6 @@
+# QingLong Skills
+
+node_modules/
+.cache/
+*.log
+.DS_Store

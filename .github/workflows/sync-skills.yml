@@ -1,0 +1,51 @@
+name: Sync Skills from Independent Repos
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: 'Skill to sync (e.g., qinglong-skills). Leave empty to sync all.'
+        required: false
+  schedule:
+    - cron: '0 2 * * *'  # 每天凌晨 2 点同步
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync qinglong-skills
+        run: |
+          # 浅克隆独立仓库到临时目录
+          git clone --depth 1 https://github.com/NNNNzs/qinglong-skills.git /tmp/qinglong-skills
+          # 清空并复制
+          rm -rf skills/qinglong-skills
+          cp -r /tmp/qinglong-skills skills/qinglong-skills
+          # 清理不需要的文件
+          rm -rf skills/qinglong-skills/.git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 更多独立仓库在这里继续加
+      # - name: Sync another-skill
+      #   run: |
+      #     git clone --depth 1 https://github.com/NNNNzs/another-skill.git /tmp/another-skill
+      #     rm -rf skills/another-skill
+      #     cp -r /tmp/another-skill skills/another-skill
+      #     rm -rf skills/another-skill/.git
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "sync: update skills from independent repos"
+            git push
+          fi
