@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       skill:
-        description: 'Skill to sync (e.g., qinglong-skills). Leave empty to sync all.'
+        description: 'Skill to sync (e.g., qinglong-skills, zhihu-cli). Leave empty to sync all.'
         required: false
   schedule:
     - cron: '0 2 * * *'  # 每天凌晨 2 点同步
+  repository_dispatch:
+    types: [sync-skill]
 
 permissions:
   contents: write
@@ -19,19 +21,35 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Sync qinglong-skills
+        if: ${{ github.event.inputs.skill == '' || github.event.inputs.skill == 'qinglong-skills' }}
         run: |
-          # 浅克隆独立仓库到临时目录
           git clone --depth 1 https://github.com/NNNNzs/qinglong-skills.git /tmp/qinglong-skills
-          # 清空并复制
           rm -rf skills/qinglong-skills
           cp -r /tmp/qinglong-skills skills/qinglong-skills
-          # 清理不需要的文件
           rm -rf skills/qinglong-skills/.git
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          rm -f skills/qinglong-skills/.env
+          rm -f skills/qinglong-skills/.env.*
+
+      - name: Sync zhihu-cli
+        if: ${{ github.event.inputs.skill == '' || github.event.inputs.skill == 'zhihu-cli' }}
+        run: |
+          git clone --depth 1 https://github.com/NNNNzs/zhihu-cli.git /tmp/zhihu-cli
+          # 使用 dist/skills/zhihu-cli 作为分发目录（由 pnpm sync:skills 生成）
+          rm -rf skills/zhihu-cli
+          if [ -d /tmp/zhihu-cli/dist/skills/zhihu-cli ]; then
+            cp -r /tmp/zhihu-cli/dist/skills/zhihu-cli skills/zhihu-cli
+          else
+            # fallback: 直接拷 SKILL.md + references
+            mkdir -p skills/zhihu-cli/references skills/zhihu-cli/docs
+            cp /tmp/zhihu-cli/SKILL.md skills/zhihu-cli/
+            cp -r /tmp/zhihu-cli/references/* skills/zhihu-cli/references/ 2>/dev/null || true
+            cp /tmp/zhihu-cli/docs/*.md skills/zhihu-cli/docs/ 2>/dev/null || true
+          fi
+          rm -rf /tmp/zhihu-cli
 
       # 更多独立仓库在这里继续加
       # - name: Sync another-skill
+      #   if: ${{ github.event.inputs.skill == '' || github.event.inputs.skill == 'another-skill' }}
       #   run: |
       #     git clone --depth 1 https://github.com/NNNNzs/another-skill.git /tmp/another-skill
       #     rm -rf skills/another-skill
