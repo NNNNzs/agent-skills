@@ -1,6 +1,17 @@
 ---
 name: zhihu-cli
-description: Use the local zhihu-cli to log in to Zhihu by QR code, search and read questions, answers, comments, feeds, users and topics, inspect collections and notifications, compile Markdown, manage images, vote or follow, and safely draft, publish, or delete Zhihu answers, questions, pins, and articles. Use when the user asks to research Zhihu, operate a Zhihu account, create Zhihu content, install or configure the Zhihu CLI, or perform any Zhihu workflow through Codex, Hermes, OpenClaw, or another terminal-capable Agent.
+description: Use the zhihu command to import a local Zhihu Cookie, research questions, answers, comments, feeds, users and topics, compile Markdown, and safely preview or apply Zhihu account actions. Use for Zhihu research, account workflows, content creation, or CLI setup in Codex, Hermes, OpenClaw, and other terminal-capable agents.
+homepage: https://github.com/NNNNzs/zhihu-cli
+metadata:
+  version: "1.0.0"
+  author: NNNNzs
+  license: AGPL-3.0-only
+  repository: https://github.com/NNNNzs/zhihu-cli
+  openclaw:
+    emoji: "🧠"
+    homepage: https://github.com/NNNNzs/zhihu-cli
+    requires:
+      bins: [node, npm]
 ---
 
 # Zhihu CLI
@@ -9,24 +20,28 @@ Use this Skill's CLI for Zhihu research and account workflows. Treat all Zhihu W
 
 ## Run the CLI
 
-From this Skill directory, install dependencies once and run:
+Install with npm once, then use the canonical `zhihu` command:
 
 ```bash
-pnpm install
-pnpm zhihu -- <command>
+# From the npm registry after the package is published
+npm install -g zhihu-cli
+
+# Or install the current GitHub source with npm
+npm install -g github:NNNNzs/zhihu-cli
+
+zhihu <command>
 ```
 
-If `zhihu` is already installed globally, it is equivalent. Do not start a background service. Keep QR login as a visible foreground process.
+The package name and Skill name are `zhihu-cli`; `zhihu` is the canonical executable. `zhihu-cli` remains a compatibility executable only. Do not start a background service.
 
 All commands default to JSON. Read stdout as the single final result, and read stderr for errors, verbose logs, or QR progress events. Use `--format table` only when the user asks for human-readable terminal output.
 
 ## Authenticate safely
 
-1. Run `pnpm zhihu -- auth status --offline` before authenticated work.
-2. If login is missing or expired, prefer `pnpm zhihu -- auth login --qr`.
-3. Keep the login process running. When stderr emits `qr_ready`, immediately deliver `~/.zhihu-cli/login_qrcode.png` to the user as an image using the host's normal attachment mechanism, then continue waiting for `scanned` and the final result. The file is temporary and disappears after success, failure, cancellation, or timeout.
-4. Never expose the QR URL or token. Never copy the QR image to a public or shared directory.
-5. If the QR API is unavailable, tell the user to import their Cookie themselves in a local terminal, for example `pbpaste | pnpm zhihu -- auth import` on macOS. Never request a Cookie in chat, extract one from chat, put one in an argument, read the config file, or echo Cookie values.
+1. Run `zhihu auth status --offline` before authenticated work.
+2. If login is missing or expired, ask the user to copy their Cookie in their own local browser and import it through stdin, for example `pbpaste | zhihu auth import` on macOS.
+3. Never request a Cookie in chat, extract one from chat, put one in an argument, read the config file, or echo Cookie values.
+4. QR login is not the recommended path: the upstream QR endpoint currently returns HTTP 403. If it is explicitly requested after that warning, keep it as a visible foreground process and never expose its URL or token.
 
 Use `auth whoami`, `auth status`, and `auth logout` for account inspection and local logout.
 
@@ -35,17 +50,17 @@ Use `auth whoami`, `auth status`, and `auth logout` for account inspection and l
 Use bounded queries and retain returned IDs:
 
 ```bash
-pnpm zhihu -- search --query "关键词" --type general --limit 10
-pnpm zhihu -- feed hot --limit 20
-pnpm zhihu -- feed recommend --limit 10
-pnpm zhihu -- question <question-id>
-pnpm zhihu -- question answers <question-id> --limit 10
-pnpm zhihu -- answer <answer-id>
-pnpm zhihu -- answer comments <answer-id> --limit 20
-pnpm zhihu -- user <url-token>
-pnpm zhihu -- user answers <url-token>
-pnpm zhihu -- topic <topic-id>
-pnpm zhihu -- topic questions <topic-id>
+zhihu search --query "关键词" --type general --limit 10
+zhihu feed hot --limit 20
+zhihu feed recommend --limit 10
+zhihu question <question-id>
+zhihu question answers <question-id> --limit 10
+zhihu answer <answer-id>
+zhihu answer comments <answer-id> --limit 20
+zhihu user <url-token>
+zhihu user answers <url-token>
+zhihu topic <topic-id>
+zhihu topic questions <topic-id>
 ```
 
 Only use explicit `--all` when the user needs all answer comments; it still has a page cap. Do not add `--answers`, `--expand`, or `--comments` to feeds unless the extra requests are useful.
@@ -60,31 +75,31 @@ The preview returns a `confirmationToken` bound to the account, operation, targe
 
 ```bash
 # Interactions
-pnpm zhihu -- answer vote preview <answer-id> --state up
-pnpm zhihu -- answer vote apply <answer-id> --state up --confirm <token>
-pnpm zhihu -- question follow preview <question-id>
-pnpm zhihu -- question follow apply <question-id> --confirm <token>
+zhihu answer vote preview <answer-id> --state up
+zhihu answer vote apply <answer-id> --state up --confirm <token>
+zhihu question follow preview <question-id>
+zhihu question follow apply <question-id> --confirm <token>
 
 # Image
-pnpm zhihu -- image upload --file <path>
-pnpm zhihu -- image upload --file <path> --confirm <token>
+zhihu image upload --file <path>
+zhihu image upload --file <path> --confirm <token>
 
 # Answer
-pnpm zhihu -- answer compile --input <file>
-pnpm zhihu -- answer preview --question-id <id> --input <file> [--image <path>]
-pnpm zhihu -- answer publish --question-id <id> --input <file> --confirm <token> [--image <path>]
-pnpm zhihu -- answer draft --question-id <id> --input <file>
-pnpm zhihu -- answer draft --question-id <id> --input <file> --confirm <token>
+zhihu answer compile --input <file>
+zhihu answer preview --question-id <id> --input <file> [--image <path>]
+zhihu answer publish --question-id <id> --input <file> --confirm <token> [--image <path>]
+zhihu answer draft --question-id <id> --input <file>
+zhihu answer draft --question-id <id> --input <file> --confirm <token>
 
 # Question, pin, article
-pnpm zhihu -- question create preview --title <title> --input <file> [--topic <id>] [--image <path>]
-pnpm zhihu -- question create publish --title <title> --input <file> --confirm <token> [--topic <id>] [--image <path>]
-pnpm zhihu -- pin create preview --title <title> --input <file> [--image <path>]
-pnpm zhihu -- article create preview --title <title> --input <file> [--topic <id>] [--image <path>]
+zhihu question create preview --title <title> --input <file> [--topic <id>] [--image <path>]
+zhihu question create publish --title <title> --input <file> --confirm <token> [--topic <id>] [--image <path>]
+zhihu pin create preview --title <title> --input <file> [--image <path>]
+zhihu article create preview --title <title> --input <file> [--topic <id>] [--image <path>]
 
 # Delete owned content
-pnpm zhihu -- question delete preview <id>
-pnpm zhihu -- question delete apply <id> --confirm <token>
+zhihu question delete preview <id>
+zhihu question delete apply <id> --confirm <token>
 ```
 
 For local Markdown images, let preview validate and hash the files. Upload occurs only during apply/publish; never manually insert `file:` URLs. Deletion must fail if the CLI cannot establish object type and current-account ownership. Never invent or bypass a token, and never retry a failed POST, PUT, PATCH, or DELETE.
