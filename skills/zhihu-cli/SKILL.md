@@ -43,24 +43,26 @@ All commands default to JSON. Read stdout as the single final result, and read s
 3. Never request a Cookie in chat, extract one from chat, put one in an argument, read the config file, or echo Cookie values.
 4. QR login is not the recommended path: the upstream QR endpoint currently returns HTTP 403. If it is explicitly requested after that warning, keep it as a visible foreground process and never expose its URL or token.
 
-Use `auth whoami`, `auth status`, and `auth logout` for account inspection and local logout.
+Cookie import automatically attempts safe completion; use `auth repair` for an existing config. A 401 may require repair or a fresh QR login because there is no verified Web refresh-token protocol. Use `auth whoami`, `auth status`, and `auth logout` for account inspection and local logout.
 
 ## Research
 
 Use bounded queries and retain returned IDs:
 
 ```bash
-zhihu search --query "关键词" --type general --limit 10
-zhihu feed hot --limit 20
-zhihu feed recommend --limit 10
-zhihu question <question-id>
-zhihu question answers <question-id> --limit 10
-zhihu answer <answer-id>
-zhihu answer comments <answer-id> --limit 20
-zhihu user <url-token>
-zhihu user answers <url-token>
-zhihu topic <topic-id>
-zhihu topic questions <topic-id>
+pnpm zhihu -- search --query "关键词" --type general --limit 10
+pnpm zhihu -- feed hot --limit 20
+pnpm zhihu -- feed hot-search --limit 20
+pnpm zhihu -- feed recommend --limit 10
+pnpm zhihu -- question <question-id>
+pnpm zhihu -- question answers <question-id> --limit 10
+pnpm zhihu -- answer <answer-id>
+pnpm zhihu -- answer comments <answer-id> --limit 20
+pnpm zhihu -- article show <article-id>
+pnpm zhihu -- user <url-token>
+pnpm zhihu -- user answers <url-token>
+pnpm zhihu -- topic <topic-id>
+pnpm zhihu -- topic questions <topic-id>
 ```
 
 Only use explicit `--all` when the user needs all answer comments; it still has a page cap. Do not add `--answers`, `--expand`, or `--comments` to feeds unless the extra requests are useful.

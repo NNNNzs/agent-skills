@@ -23,6 +23,8 @@
 - 想法：纯文本、多图、上传失败和发布失败。
 - 文章：专栏 draft/update/publish 路径，以及带图统一发布路径。
 - 所有内容检查最终 HTML 不含 `file:` 或 `pending.invalid`。
+- 新 PNG/JPEG/WebP 图片确认顺序为申请、OSS PUT、`uploading_status`、轮询；通知 204 可成功，通知失败不得继续轮询或发布。
+- GIF 确认所有分片及 complete 成功后才发送 `uploading_status`；复用图片不得重复通知。
 
 ## 删除
 
